@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AI Fitness Trainer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="logo">FitAI</a>
+        <div class="links">
+            <a href="register.html">Register</a>
+        </div>
+    </nav>
+    <div class="container center-box">
+        <div class="glass-panel auth-form">
+            <h2>Welcome Back</h2>
+            <div id="error-msg" class="error-msg hidden"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error-msg');
+            
+            try {
+                const params = new URLSearchParams();
+                params.append('username', username);
+                params.append('password', password);
+                
+                const data = await apiCall('/login', 'POST', params);
+                setToken(data.access_token);
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                errorDiv.textContent = err.message;
+                errorDiv.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
