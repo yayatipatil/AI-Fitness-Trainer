@@ -5,23 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Fitness Trainer</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <nav>
-        <a href="index.html" class="logo">FitAI</a>
+        <a href="index.html" class="logo">FitAI.</a>
         <div class="links">
-            <a href="login.html">Login</a>
+            <a href="login.html" class="btn btn-outline" style="padding: 0.5rem 1rem;">Login</a>
             <a href="register.html" class="btn btn-accent" style="padding: 0.5rem 1rem;">Sign Up</a>
         </div>
     </nav>
     <div class="container center-box">
-        <div class="glass-panel" style="text-align: center; max-width: 600px;">
-            <h1>Your Personal AI Fitness Coach</h1>
-            <p>Adaptive workouts, smart diet recommendations, and ML-powered fitness score tracking. No cameras, just results.</p>
-            <br>
-            <a href="register.html" class="btn">Get Started Now</a>
+        <div class="glass-panel" style="text-align: center; max-width: 800px; padding: 4rem 2rem;">
+            <i data-lucide="activity" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 1rem;"></i>
+            <h1 class="gradient-text" style="font-size: 3.5rem; margin-bottom: 1.5rem;">Your Personal AI Fitness Coach</h1>
+            <p style="font-size: 1.2rem; margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">Adaptive workouts, smart diet recommendations, and ML-powered fitness score tracking. No cameras needed to be stored, just real-time results.</p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <a href="register.html" class="btn btn-primary" style="width: auto; padding: 1rem 2rem; font-size: 1.1rem;">
+                    Get Started Now <i data-lucide="arrow-right" style="width: 20px; height: 20px;"></i>
+                </a>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>

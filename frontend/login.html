@@ -5,33 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - AI Fitness Trainer</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <nav>
-        <a href="index.html" class="logo">FitAI</a>
+        <a href="index.html" class="logo">FitAI.</a>
         <div class="links">
-            <a href="register.html">Register</a>
+            <a href="register.html" class="btn btn-accent" style="padding: 0.5rem 1rem;">Sign Up</a>
         </div>
     </nav>
     <div class="container center-box">
-        <div class="glass-panel auth-form">
-            <h2>Welcome Back</h2>
+        <div class="glass-panel auth-form" style="padding: 3rem 2rem;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <i data-lucide="log-in" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 1rem;"></i>
+                <h2 class="gradient-text">Welcome Back</h2>
+                <p>Login to track your fitness journey.</p>
+            </div>
             <div id="error-msg" class="error-msg hidden"></div>
             <form id="login-form">
                 <div class="form-group">
                     <label>Username</label>
-                    <input type="text" id="username" required>
+                    <input type="text" id="username" required placeholder="Enter your username">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="password" required>
+                    <input type="password" id="password" required placeholder="••••••••">
                 </div>
-                <button type="submit" class="btn">Login</button>
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Login</button>
             </form>
         </div>
     </div>
     <script src="script.js"></script>
     <script>
+        lucide.createIcons();
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value;

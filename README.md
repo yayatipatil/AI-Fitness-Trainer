@@ -3,14 +3,16 @@
 A modern, full-stack AI fitness application that uses rule-based logic and machine learning to provide adaptive workout and diet recommendations.
 
 ## Features
+- **Live AI Coach**: Real-time form tracking and rep counting using MediaPipe and your webcam.
 - **Adaptive Workouts**: Adjusts intensity based on user feedback.
-- **Smart Diet Recommendations**: Calculates BMR and suggests macros based on user goals.
+- **Smart Diet Recommendations**: Calculates BMR and suggests macros based on user goals, visualized with beautiful circular progress rings.
 - **ML Fitness Score**: A Scikit-learn Random Forest model predicts your overall fitness score.
-- **Modern Dashboard**: Track progress and streaks with a beautiful, responsive, glassmorphic UI.
+- **Advanced Analytics**: Dedicated charts page to visualize calorie burn history and fitness score breakdowns.
+- **Modern Dashboard**: Track progress and streaks with a premium, bento-grid, glassmorphic UI featuring smooth animations.
 
 ## Tech Stack
 - **Backend**: Python, FastAPI, SQLite, Scikit-Learn
-- **Frontend**: Vanilla HTML, CSS, JavaScript (Fetch API, Chart.js)
+- **Frontend**: Vanilla HTML, CSS, JavaScript (Fetch API, Chart.js, MediaPipe Pose Tracking, Lucide Icons)
 
 ## Setup Instructions
 

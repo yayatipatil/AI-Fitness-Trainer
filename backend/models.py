@@ -44,6 +44,7 @@ class WorkoutLog(Base):
     workout_type = Column(String)
     difficulty_feedback = Column(String) # Easy, Medium, Hard
     calories_burned = Column(Float)
+    reps = Column(Integer, default=0)
 
     user = relationship("User", back_populates="workout_logs")
 
@@ -88,6 +89,7 @@ class WorkoutLogCreate(BaseModel):
     workout_type: str
     difficulty_feedback: str
     calories_burned: float
+    reps: Optional[int] = 0
 
 class WorkoutLogResponse(BaseModel):
     id: int
@@ -95,6 +97,7 @@ class WorkoutLogResponse(BaseModel):
     workout_type: str
     difficulty_feedback: str
     calories_burned: float
+    reps: Optional[int] = 0
     
     class Config:
         from_attributes = True

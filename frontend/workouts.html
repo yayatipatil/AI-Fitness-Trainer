@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workouts - AI Fitness Trainer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <nav>
+        <a href="dashboard.html" class="logo">FitAI.</a>
+        <div class="links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="workouts.html" class="active">Workouts</a>
+            <a href="diet.html">Diet</a>
+            <a href="analytics.html">Analytics</a>
+            <a href="profile.html">Profile</a>
+            <a href="live_coach.html" class="btn btn-accent" style="padding: 0.5rem 1rem;">
+                <i data-lucide="video" style="width:16px;height:16px;"></i> Live Coach
+            </a>
+            <a href="#" onclick="logout()" style="margin-left:1rem;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container" id="workouts-content">
+        <div style="margin-bottom: 2rem;">
+            <h1 class="gradient-text">Your Recommended Workouts</h1>
+            <p>Based on your profile, here are multiple workout options for today. Choose the one that fits your schedule.</p>
+        </div>
+
+        <div class="dashboard-grid" id="workouts-container" style="margin-bottom: 3rem;">
+            <!-- Workout cards will be injected here -->
+        </div>
+        
+        <div class="glass-panel" style="max-width: 800px; margin: 0 auto; border-color: rgba(59, 130, 246, 0.3);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <i data-lucide="check-circle" style="color: var(--primary);"></i>
+                <h3 style="margin: 0;">Log a Completed Workout</h3>
+            </div>
+            <p style="font-size: 0.9rem;">Select the workout you completed to track your progress and let the AI adapt to your level.</p>
+            
+            <form id="log-workout-form" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-top: 1.5rem;">
+                <div class="form-group" style="margin-bottom: 0; flex: 2; min-width: 200px;">
+                    <label>Workout Type</label>
+                    <select id="w-type" required>
+                        <!-- Options injected here -->
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                    <label>Difficulty</label>
+                    <select id="w-difficulty" required>
+                        <option value="Easy">Easy (Too light)</option>
+                        <option value="Medium" selected>Medium (Perfect)</option>
+                        <option value="Hard">Hard (Too intense)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 120px;">
+                    <label>Calories Burned</label>
+                    <input type="number" id="w-calories" value="300" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="flex: 1; min-width: 150px; height: 48px;">
+                    Log Workout
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        async function loadWorkouts() {
+            try {
+                const data = await apiCall('/recommend-workout');
+                
+                const container = document.getElementById('workouts-container');
+                const selectType = document.getElementById('w-type');
+                
+                container.innerHTML = '';
+                selectType.innerHTML = '';
+                
+                data.workout.forEach((workout, index) => {
+                    // Create Card
+                    const card = document.createElement('div');
+                    card.className = 'glass-panel';
+                    card.style.position = 'relative';
+                    card.style.overflow = 'hidden';
+                    
+                    let exercisesHtml = '';
+                    workout.exercises.forEach(ex => {
+                        exercisesHtml += `<li style="background: rgba(0,0,0,0.3); padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 600;">${ex.name}</span> 
+                            <span style="color: var(--primary); font-size: 0.9rem;">${ex.sets} sets x ${ex.reps}</span>
+                        </li>`;
+                    });
+                    
+                    card.innerHTML = `
+                        <div style="position: absolute; top: 0; right: 0; padding: 1rem; opacity: 0.1; color: var(--primary);">
+                            <i data-lucide="dumbbell" style="width: 60px; height: 60px;"></i>
+                        </div>
+                        <h3 style="color: var(--primary); margin-bottom: 0.5rem; font-size: 1.4rem; z-index: 1; position: relative;">${workout.type}</h3>
+                        <p style="font-size: 0.9rem; margin-bottom: 1.5rem; z-index: 1; position: relative;">Rest Time: <strong style="color: white;">${workout.rest_time}</strong></p>
+                        <ul style="list-style: none; padding: 0; z-index: 1; position: relative;">
+                            ${exercisesHtml}
+                        </ul>
+                    `;
+                    
+                    container.appendChild(card);
+                    
+                    // Add to select options
+                    const option = document.createElement('option');
+                    option.value = workout.type;
+                    option.textContent = workout.type;
+                    selectType.appendChild(option);
+                });
+                
+                // Re-init lucide icons for newly injected HTML
+                lucide.createIcons();
+                
+            } catch (err) {
+                console.error(err);
+                if(err.message === "Profile not found" || err.message === "Profile required for recommendations") {
+                    alert("Please complete your profile first.");
+                    window.location.href = 'profile.html';
+                }
+            }
+        }
+
+        document.getElementById('log-workout-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const type = document.getElementById('w-type').value;
+            const difficulty = document.getElementById('w-difficulty').value;
+            const calories = parseFloat(document.getElementById('w-calories').value);
+            
+            try {
+                await apiCall('/log-workout', 'POST', {
+                    workout_type: type,
+                    difficulty_feedback: difficulty,
+                    calories_burned: calories
+                });
+                alert('Workout logged! AI has adapted to your feedback.');
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                alert('Error logging workout: ' + err.message);
+            }
+        });
+
+        if (getToken()) {
+            loadWorkouts();
+        }
+    </script>
+</body>
+</html>

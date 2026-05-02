@@ -116,6 +116,27 @@ def log_workout(log: models.WorkoutLogCreate, current_user: models.User = Depend
     db.refresh(new_log)
     return new_log
 
+@app.post("/log-live-workout", response_model=models.WorkoutLogResponse)
+def log_live_workout(log: models.WorkoutLogCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    # Same as log_workout but specifically designed for computer vision payloads
+    new_log = models.WorkoutLog(**log.dict(), user_id=current_user.id)
+    db.add(new_log)
+    
+    if current_user.profile:
+        # If the user completed a high number of verified reps, we can increase intensity faster
+        if log.reps and log.reps > 15:
+            new_modifier = min(current_user.profile.intensity_modifier + 0.15, 2.5)
+        else:
+            new_modifier = recommendation.update_intensity_modifier(
+                current_user.profile.intensity_modifier, 
+                log.difficulty_feedback
+            )
+        current_user.profile.intensity_modifier = new_modifier
+        
+    db.commit()
+    db.refresh(new_log)
+    return new_log
+
 @app.get("/fitness-score")
 def get_fitness_score(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     if not current_user.profile:

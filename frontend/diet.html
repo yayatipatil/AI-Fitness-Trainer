@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diet Recommendations - AI Fitness Trainer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <nav>
+        <a href="dashboard.html" class="logo">FitAI.</a>
+        <div class="links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="workouts.html">Workouts</a>
+            <a href="diet.html" class="active">Diet</a>
+            <a href="analytics.html">Analytics</a>
+            <a href="profile.html">Profile</a>
+            <a href="live_coach.html" class="btn btn-accent" style="padding: 0.5rem 1rem;">
+                <i data-lucide="video" style="width:16px;height:16px;"></i> Live Coach
+            </a>
+            <a href="#" onclick="logout()" style="margin-left:1rem;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container" id="diet-content" style="display: none;">
+        <div style="margin-bottom: 2rem;">
+            <h1 class="gradient-text">Nutrition Plan</h1>
+            <p>Your personalized diet recommendations based on your profile and goals.</p>
+        </div>
+
+        <div class="bento-grid">
+            <div class="bento-item glass-panel" style="grid-column: span 6; display: flex; align-items: center; justify-content: space-around;">
+                <div>
+                    <h3 style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 0.5rem;">Daily Calorie Goal</h3>
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--accent);"><span id="diet-calories">--</span> <span style="font-size: 1rem; color: var(--text-muted);">kcal</span></div>
+                </div>
+                <div class="circular-progress" id="cal-progress">
+                    <span class="progress-value">100%</span>
+                </div>
+            </div>
+
+            <div class="bento-item glass-panel" style="grid-column: span 6; display: flex; align-items: center; justify-content: space-around;">
+                <div>
+                    <h3 style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 0.5rem;">Protein Target</h3>
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--primary);"><span id="diet-protein">--</span> <span style="font-size: 1rem; color: var(--text-muted);">g</span></div>
+                </div>
+                <div class="circular-progress" style="background: conic-gradient(var(--primary) 65%, rgba(255,255,255,0.1) 0);">
+                    <span class="progress-value">65%</span>
+                </div>
+            </div>
+
+            <div class="bento-item glass-panel" style="grid-column: span 12;">
+                <h3><i data-lucide="info" style="width:20px;height:20px; vertical-align: middle;"></i> AI Suggestion</h3>
+                <p id="diet-suggestion" style="font-size: 1.1rem; color: var(--text-main); margin-top: 1rem;"></p>
+                
+                <div style="margin-top: 2rem;">
+                    <h4 style="margin-bottom: 1rem; color: var(--text-muted);">Recommended Meals</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px;">
+                            <strong style="color: var(--primary);">Breakfast</strong>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 0;">Oatmeal with protein powder and berries</p>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px;">
+                            <strong style="color: var(--accent);">Lunch</strong>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 0;">Grilled chicken salad with quinoa</p>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px;">
+                            <strong style="color: var(--purple-accent);">Dinner</strong>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 0;">Salmon with sweet potato and asparagus</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        async function loadDiet() {
+            try {
+                await apiCall('/profile'); // Ensure profile exists
+                document.getElementById('diet-content').style.display = 'block';
+                
+                const data = await apiCall('/recommend-workout');
+                
+                document.getElementById('diet-calories').textContent = data.diet.daily_calories;
+                document.getElementById('diet-protein').textContent = data.diet.protein_grams;
+                document.getElementById('diet-suggestion').textContent = data.diet.suggestion || "Focus on hitting your daily targets consistently.";
+
+            } catch (err) {
+                console.error(err);
+                if(err.message === "Profile not found") {
+                    window.location.href = 'profile.html';
+                }
+            }
+        }
+
+        if (getToken()) {
+            loadDiet();
+        }
+    </script>
+</body>
+</html>

@@ -50,9 +50,15 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     }
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    const data = await response.json();
+    const data = await response.json().catch(() => ({})); // Handle cases where response isn't JSON
 
     if (!response.ok) {
+        if (response.status === 401) {
+            // Token is invalid or expired
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+            return;
+        }
         throw new Error(data.detail || 'API Error');
     }
 
@@ -90,16 +96,17 @@ function renderChart(dates, calories) {
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
                     ticks: { color: '#94a3b8' }
                 },
                 x: {
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
                     ticks: { color: '#94a3b8' }
                 }
             },
             plugins: {
-                legend: { labels: { color: '#f8fafc' } }
+                legend: { labels: { color: '#f8fafc', font: { family: 'Outfit', size: 14 } } },
+                tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleFont: { family: 'Outfit' }, bodyFont: { family: 'Outfit' } }
             }
         }
     });
