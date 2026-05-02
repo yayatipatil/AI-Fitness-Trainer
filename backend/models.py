@@ -15,25 +15,17 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
 
-    profile = relationship("Profile", back_populates="user", uselist=False)
+    # Profile fields merged into User
+    age = Column(Integer, nullable=True)
+    height_cm = Column(Float, nullable=True)
+    weight_kg = Column(Float, nullable=True)
+    gender = Column(String, nullable=True)
+    fitness_goal = Column(String, nullable=True) # weight_loss, muscle_gain, endurance, maintenance
+    experience_level = Column(String, nullable=True)
+    intensity_modifier = Column(Float, default=1.0)
+
     workout_logs = relationship("WorkoutLog", back_populates="user")
-
-class Profile(Base):
-    __tablename__ = "profiles"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    age = Column(Integer)
-    height = Column(Float) # in cm
-    weight = Column(Float) # in kg
-    gender = Column(String)
-    goal = Column(String) # Weight Loss, Muscle Gain, Maintenance
-    experience_level = Column(String) # Beginner, Intermediate, Advanced
-
-    # Adaptive tracking
-    intensity_modifier = Column(Float, default=1.0) # >1 means harder, <1 means easier
-
-    user = relationship("User", back_populates="profile")
+    workout_plans = relationship("WorkoutPlan", back_populates="user")
 
 class WorkoutLog(Base):
     __tablename__ = "workout_logs"
@@ -47,6 +39,21 @@ class WorkoutLog(Base):
     reps = Column(Integer, default=0)
 
     user = relationship("User", back_populates="workout_logs")
+
+class WorkoutPlan(Base):
+    __tablename__ = "workout_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    day_of_week = Column(Integer) # 0=Mon to 6=Sun
+    exercise_name = Column(String)
+    target_sets = Column(Integer)
+    target_reps = Column(Integer)
+    target_duration_mins = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="workout_plans")
+
 
 # --- Pydantic Schemas ---
 
@@ -66,20 +73,24 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
 
-class ProfileBase(BaseModel):
-    age: int
-    height: float
-    weight: float
-    gender: str
-    goal: str
-    experience_level: str
+class UserUpdate(BaseModel):
+    age: Optional[int] = None
+    height_cm: Optional[float] = None
+    weight_kg: Optional[float] = None
+    gender: Optional[str] = None
+    fitness_goal: Optional[str] = None
+    experience_level: Optional[str] = None
 
-class ProfileCreate(ProfileBase):
-    pass
-
-class ProfileResponse(ProfileBase):
+class UserResponse(BaseModel):
     id: int
-    user_id: int
+    username: str
+    email: str
+    age: Optional[int] = None
+    height_cm: Optional[float] = None
+    weight_kg: Optional[float] = None
+    gender: Optional[str] = None
+    fitness_goal: Optional[str] = None
+    experience_level: Optional[str] = None
     intensity_modifier: float
     
     class Config:
@@ -99,5 +110,20 @@ class WorkoutLogResponse(BaseModel):
     calories_burned: float
     reps: Optional[int] = 0
     
+    class Config:
+        from_attributes = True
+
+class WorkoutPlanCreate(BaseModel):
+    day_of_week: int
+    exercise_name: str
+    target_sets: int
+    target_reps: int
+    target_duration_mins: Optional[int] = None
+
+class WorkoutPlanResponse(WorkoutPlanCreate):
+    id: int
+    user_id: int
+    created_at: datetime
+
     class Config:
         from_attributes = True

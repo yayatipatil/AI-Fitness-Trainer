@@ -13,6 +13,7 @@
         <a href="dashboard.html" class="logo">FitAI.</a>
         <div class="links">
             <a href="dashboard.html">Dashboard</a>
+            <a href="planner.html">Weekly Plan</a>
             <a href="workouts.html">Workouts</a>
             <a href="diet.html">Diet</a>
             <a href="analytics.html" class="active">Analytics</a>
@@ -101,7 +102,7 @@
         
         async function loadAnalyticsData() {
             try {
-                await apiCall('/profile'); // Ensure profile exists
+                await apiCall('/auth/me'); // Ensure profile exists
                 document.getElementById('analytics-content').style.display = 'block';
                 
                 const dashData = await apiCall('/dashboard-data');

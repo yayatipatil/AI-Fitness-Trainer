@@ -12,6 +12,7 @@
         <a href="dashboard.html" class="logo">FitAI.</a>
         <div class="links">
             <a href="dashboard.html">Dashboard</a>
+            <a href="planner.html">Weekly Plan</a>
             <a href="workouts.html">Workouts</a>
             <a href="diet.html" class="active">Diet</a>
             <a href="analytics.html">Analytics</a>
@@ -81,7 +82,7 @@
         
         async function loadDiet() {
             try {
-                await apiCall('/profile'); // Ensure profile exists
+                await apiCall('/auth/me'); // Ensure profile exists
                 document.getElementById('diet-content').style.display = 'block';
                 
                 const data = await apiCall('/recommend-workout');

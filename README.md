@@ -63,3 +63,4 @@ When you run `python seed.py`, it will generate a demo user:
 - **Password**: `password123`
 
 You can use these credentials to log in and immediately see a populated dashboard with historical workout data and charts!
+

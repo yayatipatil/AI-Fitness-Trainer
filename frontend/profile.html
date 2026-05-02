@@ -12,6 +12,7 @@
         <a href="dashboard.html" class="logo">FitAI.</a>
         <div class="links">
             <a href="dashboard.html">Dashboard</a>
+            <a href="planner.html">Weekly Plan</a>
             <a href="workouts.html">Workouts</a>
             <a href="diet.html">Diet</a>
             <a href="analytics.html">Analytics</a>
@@ -89,7 +90,7 @@
         
         async function loadProfileData() {
             try {
-                const profile = await apiCall('/profile');
+                const profile = await apiCall('/auth/me');
                 document.getElementById('p-age').value = profile.age;
                 document.getElementById('p-height').value = profile.height;
                 document.getElementById('p-weight').value = profile.weight;
@@ -113,7 +114,7 @@
             };
             
             try {
-                await apiCall('/profile', 'POST', payload);
+                await apiCall('/auth/me', 'POST', payload);
                 alert('Profile saved successfully!');
                 window.location.href = 'dashboard.html';
             } catch (err) {

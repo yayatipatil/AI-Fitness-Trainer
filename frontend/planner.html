@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Planner - AI Fitness Trainer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .planner-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 15px;
+            margin-top: 2rem;
+            min-height: 400px;
+        }
+
+        @media (max-width: 1200px) {
+            .planner-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .planner-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .day-column {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .day-column.rest-day {
+            background: rgba(30, 41, 59, 0.4);
+            border-style: dashed;
+            opacity: 0.8;
+        }
+
+        .day-header {
+            text-align: center;
+            font-weight: 700;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .add-btn {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent);
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .add-btn:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .exercise-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .exercise-title {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .exercise-details {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: rgba(239, 68, 68, 0.7);
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .delete-btn:hover {
+            color: #ef4444;
+        }
+
+        .rest-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            gap: 10px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 30px;
+            width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .modal-title {
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .suggestions-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .suggestion-item {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            border-left: 4px solid var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="dashboard.html" class="logo">FitAI.</a>
+        <div class="links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="planner.html" class="active">Weekly Plan</a>
+            <a href="workouts.html">Workouts</a>
+            <a href="diet.html">Diet</a>
+            <a href="analytics.html">Analytics</a>
+            <a href="profile.html">Profile</a>
+            <a href="live_coach.html" class="btn btn-accent" style="padding: 0.5rem 1rem;">
+                <i data-lucide="video" style="width:16px;height:16px;"></i> Live Coach
+            </a>
+            <a href="#" onclick="logout()" style="margin-left:1rem;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container" style="display: none;" id="planner-content">
+        <h1 class="gradient-text">Weekly Workout Planner</h1>
+        <p>Schedule your week and track progressive overload.</p>
+        
+        <div class="planner-grid" id="planner-grid">
+            <!-- Rendered by JS -->
+        </div>
+
+        <div class="suggestions-card" id="suggestions-card" style="display: none;">
+            <h3 style="display: flex; align-items: center; gap: 10px; color: var(--accent);">
+                <i data-lucide="trending-up"></i> Progressive Overload Suggestions
+            </h3>
+            <div id="suggestions-list"></div>
+        </div>
+    </div>
+
+    <!-- Add Exercise Modal -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="modal-title">Add Exercise to Monday</h2>
+            <div class="form-group">
+                <label>Exercise Name</label>
+                <input type="text" id="plan-exercise" placeholder="e.g. Squat" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Sets</label>
+                    <input type="number" id="plan-sets" value="3" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Reps</label>
+                    <input type="number" id="plan-reps" value="10" min="1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Duration (mins, optional)</label>
+                <input type="number" id="plan-duration" placeholder="e.g. 15">
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="savePlan()" style="flex: 1;">Save</button>
+                <button class="btn" style="flex: 1; background: transparent; border: 1px solid var(--border-light);" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        let currentDayIndex = 0;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            if (getToken()) {
+                loadPlanner();
+            }
+        });
+        
+        async function loadPlanner() {
+            try {
+                document.getElementById('planner-content').style.display = 'block';
+                
+                const plans = await apiCall('/planner/week');
+                const grid = document.getElementById('planner-grid');
+                grid.innerHTML = '';
+                
+                for (let i = 0; i < 7; i++) {
+                    const dayPlans = plans.filter(p => p.day_of_week === i);
+                    
+                    let colHtml = `
+                        <div class="day-column ${dayPlans.length === 0 ? 'rest-day' : ''}">
+                            <div class="day-header">
+                                ${days[i]}
+                                <button class="add-btn" onclick="openModal(${i})"><i data-lucide="plus" style="width:14px;height:14px;"></i></button>
+                            </div>
+                    `;
+                    
+                    if (dayPlans.length === 0) {
+                        colHtml += `
+                            <div class="rest-indicator">
+                                <i data-lucide="coffee" style="width:32px;height:32px;color:rgba(255,255,255,0.2);"></i>
+                                <span>Rest Day</span>
+                            </div>
+                        `;
+                    } else {
+                        dayPlans.forEach(p => {
+                            colHtml += `
+                                <div class="exercise-card">
+                                    <i data-lucide="x" class="delete-btn" onclick="deletePlan(${p.id})"></i>
+                                    <div class="exercise-title">${p.exercise_name}</div>
+                                    <div class="exercise-details">
+                                        ${p.target_sets} sets x ${p.target_reps} reps
+                                        ${p.target_duration_mins ? `<br>${p.target_duration_mins} mins` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    colHtml += `</div>`;
+                    grid.innerHTML += colHtml;
+                }
+                
+                lucide.createIcons();
+                loadSuggestions();
+                
+            } catch (err) {
+                console.error("Error loading planner:", err);
+            }
+        }
+        
+        async function loadSuggestions() {
+            try {
+                const suggs = await apiCall('/planner/suggestions');
+                if (suggs.length > 0) {
+                    const card = document.getElementById('suggestions-card');
+                    const list = document.getElementById('suggestions-list');
+                    card.style.display = 'block';
+                    
+                    list.innerHTML = suggs.map(s => `
+                        <div class="suggestion-item">
+                            <strong style="color: #fff;">${s.exercise}:</strong>
+                            Current target: ${s.current_target} reps → <span style="color: var(--accent); font-weight: 700;">Suggest: ${s.suggested_target} reps</span>
+                            <p style="margin-top: 5px; font-size: 0.85rem; color: var(--text-muted);">${s.reason}</p>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error("Error loading suggestions:", err);
+            }
+        }
+        
+        function openModal(dayIndex) {
+            currentDayIndex = dayIndex;
+            document.getElementById('modal-title').textContent = `Add Exercise to ${days[dayIndex]}`;
+            document.getElementById('plan-exercise').value = '';
+            document.getElementById('addModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('addModal').style.display = 'none';
+        }
+        
+        async function savePlan() {
+            const exercise = document.getElementById('plan-exercise').value;
+            const sets = parseInt(document.getElementById('plan-sets').value);
+            const reps = parseInt(document.getElementById('plan-reps').value);
+            const durationStr = document.getElementById('plan-duration').value;
+            
+            if (!exercise) return alert('Exercise name is required');
+            
+            try {
+                await apiCall('/planner/day', 'POST', {
+                    day_of_week: currentDayIndex,
+                    exercise_name: exercise,
+                    target_sets: sets,
+                    target_reps: reps,
+                    target_duration_mins: durationStr ? parseInt(durationStr) : null
+                });
+                closeModal();
+                loadPlanner();
+            } catch (err) {
+                alert('Error adding plan: ' + err.message);
+            }
+        }
+        
+        async function deletePlan(id) {
+            if (!confirm('Delete this exercise?')) return;
+            try {
+                await apiCall(`/planner/day/${id}`, 'DELETE');
+                loadPlanner();
+            } catch (err) {
+                alert('Error deleting plan: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

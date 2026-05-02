@@ -61,7 +61,7 @@
                 params.append('username', username);
                 params.append('password', password);
                 
-                const data = await apiCall('/login', 'POST', params);
+                const data = await apiCall('/auth/login', 'POST', params);
                 setToken(data.access_token);
                 window.location.href = 'dashboard.html';
             } catch (err) {
