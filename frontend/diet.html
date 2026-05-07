@@ -56,20 +56,9 @@
                 <p id="diet-suggestion" style="font-size: 1.1rem; color: var(--text-main); margin-top: 1rem;"></p>
                 
                 <div style="margin-top: 2rem;">
-                    <h4 style="margin-bottom: 1rem; color: var(--text-muted);">Recommended Meals</h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px;">
-                            <strong style="color: var(--primary);">Breakfast</strong>
-                            <p style="font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 0;">Oatmeal with protein powder and berries</p>
-                        </div>
-                        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px;">
-                            <strong style="color: var(--accent);">Lunch</strong>
-                            <p style="font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 0;">Grilled chicken salad with quinoa</p>
-                        </div>
-                        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px;">
-                            <strong style="color: var(--purple-accent);">Dinner</strong>
-                            <p style="font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 0;">Salmon with sweet potato and asparagus</p>
-                        </div>
+                    <h4 style="margin-bottom: 1rem; color: var(--text-muted);">Recommended Recipes (Powered by Edamam)</h4>
+                    <div id="recipe-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <!-- Recipes injected here -->
                     </div>
                 </div>
             </div>
@@ -90,6 +79,29 @@
                 document.getElementById('diet-calories').textContent = data.diet.daily_calories;
                 document.getElementById('diet-protein').textContent = data.diet.protein_grams;
                 document.getElementById('diet-suggestion').textContent = data.diet.suggestion || "Focus on hitting your daily targets consistently.";
+
+                // Render recipes
+                const recipeGrid = document.getElementById('recipe-grid');
+                recipeGrid.innerHTML = ''; // Clear existing
+                
+                if (data.diet.recipes && data.diet.recipes.length > 0) {
+                    data.diet.recipes.forEach(recipe => {
+                        recipeGrid.innerHTML += `
+                            <a href="${recipe.url}" target="_blank" style="text-decoration: none; color: inherit;">
+                                <div class="recipe-card glass-panel" style="padding: 0;">
+                                    <img src="${recipe.image}" alt="${recipe.title}" class="recipe-image">
+                                    <div class="recipe-content">
+                                        <h4>${recipe.title}</h4>
+                                        <p>🔥 ${recipe.calories} kcal per serving</p>
+                                        <span class="btn btn-accent" style="padding: 0.5rem; font-size: 0.8rem; display: block; text-align: center;">View Recipe</span>
+                                    </div>
+                                </div>
+                            </a>
+                        `;
+                    });
+                } else {
+                    recipeGrid.innerHTML = '<p style="color: var(--text-muted);">No recipes found. Please check your API keys or try again later.</p>';
+                }
 
             } catch (err) {
                 console.error(err);

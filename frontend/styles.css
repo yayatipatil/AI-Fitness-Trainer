@@ -295,6 +295,40 @@ nav .links a.active {
     border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+/* Recipe Cards */
+.recipe-card {
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.recipe-card:hover {
+    transform: translateY(-5px);
+}
+
+.recipe-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.recipe-content {
+    padding: 1rem;
+}
+
+.recipe-content h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: var(--text-main);
+}
+
+.recipe-content p {
+    margin: 0 0 1rem 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
 /* UI Components for New Pages */
 .circular-progress {
     position: relative;

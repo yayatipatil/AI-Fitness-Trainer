@@ -1,3 +1,9 @@
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
 def calculate_bmi(weight: float, height_cm: float) -> float:
     height_m = height_cm / 100
     if height_m <= 0:
@@ -27,11 +33,80 @@ def get_diet_recommendation(weight: float, height_cm: float, age: int, gender: s
     protein_multiplier = 1.6 if goal.lower() == 'muscle gain' else 1.2
     protein = weight * protein_multiplier
     
+    
+    # Base fallback recipes
+    fallback_recipes = [
+        {
+            "title": "Grilled Chicken Salad",
+            "image": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&q=80",
+            "calories": 450,
+            "url": "https://www.delish.com/cooking/recipe-ideas/a19636022/grilled-chicken-salad-recipe/"
+        },
+        {
+            "title": "Protein Oatmeal",
+            "image": "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=400&q=80",
+            "calories": 350,
+            "url": "https://feelgoodfoodie.net/recipe/protein-oatmeal/"
+        },
+        {
+            "title": "Salmon and Quinoa",
+            "image": "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&q=80",
+            "calories": 600,
+            "url": "https://www.wellplated.com/salmon-quinoa-bowl/"
+        }
+    ]
+    
+    recipes = fetch_edamam_recipes(round(calories))
+    if not recipes:
+        recipes = fallback_recipes
+
     return {
         "daily_calories": round(calories),
         "protein_grams": round(protein),
-        "suggestion": "Focus on whole foods, lean proteins, and stay hydrated."
+        "suggestion": "Focus on whole foods, lean proteins, and stay hydrated.",
+        "recipes": recipes
     }
+
+def fetch_edamam_recipes(target_calories: int) -> list:
+    app_id = os.environ.get("EDAMAM_APP_ID")
+    app_key = os.environ.get("EDAMAM_APP_KEY")
+    
+    if not app_id or not app_key or app_id == "your_edamam_app_id_here":
+        return []
+        
+    # We want a meal, so let's say target calories per meal is target / 3
+    meal_cals = int(target_calories / 3)
+    
+    url = "https://api.edamam.com/api/recipes/v2"
+    params = {
+        "type": "public",
+        "q": "healthy",
+        "app_id": app_id,
+        "app_key": app_key,
+        "calories": f"{max(100, meal_cals - 100)}-{meal_cals + 100}",
+        "random": "true"
+    }
+    
+    try:
+        response = requests.get(url, params=params, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            hits = data.get("hits", [])
+            recipes = []
+            for hit in hits[:3]: # Get up to 3 recipes
+                recipe_data = hit.get("recipe", {})
+                recipes.append({
+                    "title": recipe_data.get("label", "Healthy Meal"),
+                    "image": recipe_data.get("image", ""),
+                    "calories": round(recipe_data.get("calories", 0) / max(1, recipe_data.get("yield", 1))), # calories per serving
+                    "url": recipe_data.get("url", "#")
+                })
+            return recipes
+    except Exception as e:
+        print(f"Error fetching recipes: {e}")
+        
+    return []
+
 
 def get_workout_recommendation(goal: str, experience_level: str, intensity_modifier: float) -> list:
     # Base sets and reps
