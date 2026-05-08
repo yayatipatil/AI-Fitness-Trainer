@@ -3,58 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - AI Fitness Trainer</title>
+    <title>Login — FitAI</title>
+    <meta name="description" content="Sign in to your FitAI account to access your workouts, analytics, and AI coaching.">
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .auth-split {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .auth-left {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-right {
+            flex: 1;
+            background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(16,185,129,0.1) 100%);
+            border-left: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            gap: 2rem;
+        }
+
+        .auth-feature {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            max-width: 320px;
+            animation: fadeInUp 0.5s ease-out both;
+        }
+
+        .auth-feature-icon {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            background: rgba(59,130,246,0.12);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .auth-feature h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin: 0 0 4px;
+        }
+
+        .auth-feature p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .show-password-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            width: auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrap input {
+            padding-right: 42px;
+        }
+
+        .btn-submit-wrap {
+            position: relative;
+        }
+
+        .btn-loading .btn-text { display: none; }
+        .btn-loading .btn-spinner { display: flex !important; }
+    </style>
 </head>
 <body>
-    <nav>
-        <a href="index.html" class="logo">FitAI.</a>
-        <div class="links">
-            <a href="register.html" class="btn btn-accent" style="padding: 0.5rem 1rem;">Sign Up</a>
-        </div>
-    </nav>
-    <div class="container center-box">
-        <div class="glass-panel auth-form" style="padding: 3rem 2rem;">
-            <div style="text-align: center; margin-bottom: 2rem;">
-                <i data-lucide="log-in" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 1rem;"></i>
-                <h2 class="gradient-text">Welcome Back</h2>
-                <p>Login to track your fitness journey.</p>
+    <div class="auth-split">
+        <!-- Left: Form -->
+        <div class="auth-left">
+            <div style="width: 100%; max-width: 400px;">
+                <a href="index.html" class="logo" style="display:inline-block; margin-bottom: 2rem;">FitAI.</a>
+
+                <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">Welcome back 👋</h2>
+                <p style="margin-bottom: 2rem;">Log in to continue your fitness journey.</p>
+
+                <div id="error-msg" class="error-msg hidden"></div>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <div class="input-wrap">
+                            <input type="text" id="username" required placeholder="e.g. demo_student" autocomplete="username">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-wrap">
+                            <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
+                            <button type="button" class="show-password-btn" onclick="togglePw()" id="pw-toggle" aria-label="Show/hide password">
+                                <i data-lucide="eye" id="pw-eye" style="width:18px;height:18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="login-btn" style="margin-top: 1.25rem;">
+                        <span class="btn-text" style="display:flex; align-items:center; gap:8px; justify-content:center;">
+                            <i data-lucide="log-in" style="width:18px;height:18px;"></i> Login
+                        </span>
+                        <span class="btn-spinner" style="display:none; align-items:center; gap:8px; justify-content:center;">
+                            <i data-lucide="loader-2" class="spin-icon" style="width:18px;height:18px;"></i> Logging in...
+                        </span>
+                    </button>
+                </form>
+
+                <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem;">
+                    Don't have an account? <a href="register.html" style="color: var(--primary); font-weight: 600; text-decoration: none;">Sign up free →</a>
+                </p>
+
+                <div style="margin-top: 2rem; padding: 1rem; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.15); border-radius: 10px; font-size: 0.85rem; color: var(--text-muted);">
+                    <strong style="color: var(--text-main);">Demo credentials:</strong><br>
+                    Username: <code style="color: var(--primary);">demo_student</code> &nbsp;|&nbsp; Password: <code style="color: var(--primary);">password123</code>
+                </div>
             </div>
-            <div id="error-msg" class="error-msg hidden"></div>
-            <form id="login-form">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="username" required placeholder="Enter your username">
+        </div>
+
+        <!-- Right: Feature highlights -->
+        <div class="auth-right">
+            <div style="text-align:center; margin-bottom: 1rem;">
+                <div class="gradient-text" style="font-size: 1.4rem; font-weight: 800;">Why FitAI?</div>
+                <p style="font-size: 0.9rem; margin: 0.5rem 0 0;">Everything you need to train smarter.</p>
+            </div>
+
+            <div class="auth-feature" style="animation-delay:0.1s;">
+                <div class="auth-feature-icon"><i data-lucide="scan-line" style="width:20px;height:20px;"></i></div>
+                <div>
+                    <h4>Real-Time Pose Tracking</h4>
+                    <p>MediaPipe counts your reps and catches form issues live.</p>
                 </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="password" required placeholder="••••••••">
+            </div>
+            <div class="auth-feature" style="animation-delay:0.2s;">
+                <div class="auth-feature-icon" style="background:rgba(16,185,129,0.12);color:var(--accent);"><i data-lucide="trending-up" style="width:20px;height:20px;"></i></div>
+                <div>
+                    <h4>1RM Progress Charts</h4>
+                    <p>Track your strength gains across every major lift.</p>
                 </div>
-                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Login</button>
-            </form>
+            </div>
+            <div class="auth-feature" style="animation-delay:0.3s;">
+                <div class="auth-feature-icon" style="background:rgba(139,92,246,0.12);color:var(--purple-accent);"><i data-lucide="trophy" style="width:20px;height:20px;"></i></div>
+                <div>
+                    <h4>Challenges &amp; Streaks</h4>
+                    <p>Stay motivated with daily goals, badges, and leaderboards.</p>
+                </div>
+            </div>
+            <div class="auth-feature" style="animation-delay:0.4s;">
+                <div class="auth-feature-icon"><i data-lucide="volume-2" style="width:20px;height:20px;"></i></div>
+                <div>
+                    <h4>Audio Coaching</h4>
+                    <p>Hands-free spoken feedback so you can focus on lifting.</p>
+                </div>
+            </div>
         </div>
     </div>
+
     <script src="script.js"></script>
     <script>
         lucide.createIcons();
+
+        function togglePw() {
+            const input = document.getElementById('password');
+            const eyeIcon = document.getElementById('pw-eye');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('error-msg');
-            
+            const btn = document.getElementById('login-btn');
+
+            btn.classList.add('btn-loading');
+            errorDiv.classList.add('hidden');
+
             try {
                 const params = new URLSearchParams();
                 params.append('username', username);
                 params.append('password', password);
-                
+
                 const data = await apiCall('/auth/login', 'POST', params);
                 setToken(data.access_token);
-                window.location.href = 'dashboard.html';
+                showToast('Logged in! Redirecting...', 'success');
+                setTimeout(() => window.location.href = 'dashboard.html', 800);
             } catch (err) {
-                errorDiv.textContent = err.message;
+                errorDiv.textContent = '❌ ' + err.message;
                 errorDiv.classList.remove('hidden');
+                btn.classList.remove('btn-loading');
             }
         });
     </script>

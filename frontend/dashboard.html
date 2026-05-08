@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - AI Fitness Trainer</title>
+    <title>Dashboard — FitAI</title>
+    <meta name="description" content="Your AI Fitness dashboard: track workouts, streaks, 1RM progress, and earned badges at a glance.">
     <link rel="stylesheet" href="styles.css">
     <!-- Include icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -13,13 +14,14 @@
     <nav>
         <a href="dashboard.html" class="logo">FitAI.</a>
         <div class="links">
-            <a href="dashboard.html" class="active">Dashboard</a>
+            <a href="dashboard.html">Dashboard</a>
             <a href="planner.html">Weekly Plan</a>
             <a href="workouts.html">Workouts</a>
             <a href="diet.html">Diet</a>
             <a href="analytics.html">Analytics</a>
+            <a href="challenges.html">Challenges</a>
             <a href="profile.html">Profile</a>
-            <a href="live_coach.html" class="btn btn-accent" style="padding: 0.5rem 1rem;">
+            <a href="live_coach.html" class="btn btn-accent" style="padding: 0.5rem 1rem; width:auto;">
                 <i data-lucide="video" style="width:16px;height:16px;"></i> Live Coach
             </a>
             <a href="#" onclick="logout()" style="margin-left:1rem;">Logout</a>
@@ -27,14 +29,19 @@
     </nav>
 
     <div class="container" id="dashboard-content" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
             <div>
-                <h1 class="gradient-text">Welcome Back</h1>
-                <p>Ready to crush your goals today?</p>
+                <h1 class="gradient-text" id="dashboard-greeting">Welcome Back 👋</h1>
+                <p id="dashboard-subheading">Ready to crush your goals today?</p>
             </div>
-            <a href="workouts.html" class="btn btn-primary" style="width: auto;">
-                <i data-lucide="play" style="width:18px;height:18px;"></i> Start Workout
-            </a>
+            <div style="display: flex; gap: 0.75rem;">
+                <a href="challenges.html" class="btn btn-outline" style="width:auto;" data-tip="View Challenges">
+                    <i data-lucide="trophy" style="width:16px;height:16px;"></i>
+                </a>
+                <a href="workouts.html" class="btn btn-primary" style="width: auto;">
+                    <i data-lucide="play" style="width:18px;height:18px;"></i> Start Workout
+                </a>
+            </div>
         </div>
 
         <div class="bento-grid">
@@ -137,8 +144,19 @@
         async function loadDashboard() {
             try {
                 try {
-                    await apiCall('/auth/me');
+                    const me = await apiCall('/auth/me');
                     document.getElementById('dashboard-content').style.display = 'block';
+
+                    // Time-aware greeting
+                    const hour = new Date().getHours();
+                    const greet = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+                    const emoji = hour < 12 ? '☀️' : hour < 17 ? '💪' : '🌙';
+                    document.getElementById('dashboard-greeting').textContent = `${greet}, ${me.username || 'Athlete'} ${emoji}`;
+                    document.getElementById('dashboard-subheading').textContent =
+                        hour < 12 ? "Start strong — your workout plan is ready." :
+                        hour < 17 ? "Keep pushing — you're doing great!" :
+                        "Wind down with a solid session tonight.";
+
                     loadRecommendations();
                     loadAnalytics();
                     loadRecentLiveWorkout();

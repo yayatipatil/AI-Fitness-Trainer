@@ -3,9 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diet Recommendations - AI Fitness Trainer</title>
+    <title>Nutrition Plan — FitAI</title>
+    <meta name="description" content="Your personalized AI diet plan with calorie targets, macro breakdowns, and Edamam-powered recipe suggestions.">
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .macro-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .macro-chip {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .macro-chip .mac-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+        .macro-chip .mac-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .suggestion-box {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            background: rgba(59,130,246,0.07);
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .recipe-card {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .recipe-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+            border-color: rgba(59,130,246,0.3);
+        }
+        .recipe-image {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            display: block;
+        }
+        .recipe-body { padding: 1rem; }
+        .recipe-body h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin: 0 0 6px;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .recipe-cal-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: rgba(16,185,129,0.12);
+            color: var(--accent);
+            padding: 3px 10px;
+            border-radius: 999px;
+            margin-bottom: 10px;
+        }
+        .recipe-view-btn {
+            display: block;
+            text-align: center;
+            padding: 7px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .recipe-card:hover .recipe-view-btn {
+            background: rgba(59,130,246,0.15);
+            border-color: rgba(59,130,246,0.3);
+            color: white;
+        }
+
+        .recipes-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin: 2rem 0 1.25rem;
+        }
+    </style>
 </head>
 <body>
     <nav>
@@ -14,10 +124,11 @@
             <a href="dashboard.html">Dashboard</a>
             <a href="planner.html">Weekly Plan</a>
             <a href="workouts.html">Workouts</a>
-            <a href="diet.html" class="active">Diet</a>
+            <a href="diet.html">Diet</a>
             <a href="analytics.html">Analytics</a>
+            <a href="challenges.html">Challenges</a>
             <a href="profile.html">Profile</a>
-            <a href="live_coach.html" class="btn btn-accent" style="padding: 0.5rem 1rem;">
+            <a href="live_coach.html" class="btn btn-accent" style="padding: 0.5rem 1rem; width:auto;">
                 <i data-lucide="video" style="width:16px;height:16px;"></i> Live Coach
             </a>
             <a href="#" onclick="logout()" style="margin-left:1rem;">Logout</a>
@@ -27,39 +138,61 @@
     <div class="container" id="diet-content" style="display: none;">
         <div style="margin-bottom: 2rem;">
             <h1 class="gradient-text">Nutrition Plan</h1>
-            <p>Your personalized diet recommendations based on your profile and goals.</p>
+            <p>Your personalised diet recommendations based on your profile and fitness goal.</p>
         </div>
 
         <div class="bento-grid">
-            <div class="bento-item glass-panel" style="grid-column: span 6; display: flex; align-items: center; justify-content: space-around;">
-                <div>
-                    <h3 style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 0.5rem;">Daily Calorie Goal</h3>
-                    <div style="font-size: 3rem; font-weight: 800; color: var(--accent);"><span id="diet-calories">--</span> <span style="font-size: 1rem; color: var(--text-muted);">kcal</span></div>
+            <!-- Calorie + Macro panel -->
+            <div class="bento-item glass-panel" style="grid-column: span 8;">
+                <h3 style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.5rem;">Daily Targets</h3>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                    <span id="diet-calories" style="font-size: 4rem; font-weight: 800; color: var(--accent); line-height:1;">--</span>
+                    <span style="font-size: 1.1rem; color: var(--text-muted);">kcal / day</span>
                 </div>
-                <div class="circular-progress" id="cal-progress">
-                    <span class="progress-value">100%</span>
-                </div>
-            </div>
 
-            <div class="bento-item glass-panel" style="grid-column: span 6; display: flex; align-items: center; justify-content: space-around;">
-                <div>
-                    <h3 style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 0.5rem;">Protein Target</h3>
-                    <div style="font-size: 3rem; font-weight: 800; color: var(--primary);"><span id="diet-protein">--</span> <span style="font-size: 1rem; color: var(--text-muted);">g</span></div>
-                </div>
-                <div class="circular-progress" style="background: conic-gradient(var(--primary) 65%, rgba(255,255,255,0.1) 0);">
-                    <span class="progress-value">65%</span>
-                </div>
-            </div>
-
-            <div class="bento-item glass-panel" style="grid-column: span 12;">
-                <h3><i data-lucide="info" style="width:20px;height:20px; vertical-align: middle;"></i> AI Suggestion</h3>
-                <p id="diet-suggestion" style="font-size: 1.1rem; color: var(--text-main); margin-top: 1rem;"></p>
-                
-                <div style="margin-top: 2rem;">
-                    <h4 style="margin-bottom: 1rem; color: var(--text-muted);">Recommended Recipes (Powered by Edamam)</h4>
-                    <div id="recipe-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                        <!-- Recipes injected here -->
+                <div class="macro-grid">
+                    <div class="macro-chip">
+                        <div class="mac-val" style="color: var(--primary);" id="diet-protein">--<span style="font-size:1rem;">g</span></div>
+                        <div class="mac-label">Protein</div>
                     </div>
+                    <div class="macro-chip">
+                        <div class="mac-val" style="color: var(--accent);" id="diet-carbs">--<span style="font-size:1rem;">g</span></div>
+                        <div class="mac-label">Carbs</div>
+                    </div>
+                    <div class="macro-chip">
+                        <div class="mac-val" style="color: var(--purple-accent);" id="diet-fat">--<span style="font-size:1rem;">g</span></div>
+                        <div class="mac-label">Fat</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Circular progress ring -->
+            <div class="bento-item glass-panel" style="grid-column: span 4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;">
+                <div class="circular-progress" id="cal-ring">
+                    <span class="progress-value" id="cal-pct">100%</span>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-weight: 700;">Goal Met</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Hit your targets daily</div>
+                </div>
+            </div>
+
+            <!-- AI Suggestion + Recipes -->
+            <div class="bento-item glass-panel" style="grid-column: span 12;">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="sparkles" style="width:20px;height:20px; color: var(--primary);"></i> AI Suggestion
+                </h3>
+                <div class="suggestion-box">
+                    <i data-lucide="info" style="width:20px;height:20px; color: var(--primary); flex-shrink:0; margin-top:2px;"></i>
+                    <p id="diet-suggestion" style="margin: 0; color: var(--text-main); font-size: 1rem; line-height: 1.6;"></p>
+                </div>
+
+                <div class="recipes-header">
+                    <i data-lucide="utensils-crossed" style="width:18px;height:18px;"></i>
+                    Recommended Recipes <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 4px; font-weight: 400;">Powered by Edamam</span>
+                </div>
+                <div id="recipe-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.25rem;">
+                    <!-- Recipes injected here -->
                 </div>
             </div>
         </div>
@@ -68,52 +201,69 @@
     <script src="script.js"></script>
     <script>
         lucide.createIcons();
-        
-        async function loadDiet() {
-            try {
-                await apiCall('/auth/me'); // Ensure profile exists
-                document.getElementById('diet-content').style.display = 'block';
-                
-                const data = await apiCall('/recommend-workout');
-                
-                document.getElementById('diet-calories').textContent = data.diet.daily_calories;
-                document.getElementById('diet-protein').textContent = data.diet.protein_grams;
-                document.getElementById('diet-suggestion').textContent = data.diet.suggestion || "Focus on hitting your daily targets consistently.";
 
-                // Render recipes
+        async function loadDiet() {
+            showLoadingSpinner('diet-content');
+            try {
+                await apiCall('/auth/me');
+                document.getElementById('diet-content').style.display = 'block';
+
+                const data = await apiCall('/recommend-workout');
+                const diet = data.diet;
+
+                document.getElementById('diet-calories').innerHTML = diet.daily_calories + '<span style="font-size:1.1rem; color:var(--text-muted);">kcal</span>';
+                document.getElementById('diet-protein').innerHTML = diet.protein_grams + '<span style="font-size:1rem;">g</span>';
+
+                // Estimate carbs & fat from calories
+                const cal = parseInt(diet.daily_calories) || 2000;
+                document.getElementById('diet-carbs').innerHTML = Math.round(cal * 0.45 / 4) + '<span style="font-size:1rem;">g</span>';
+                document.getElementById('diet-fat').innerHTML = Math.round(cal * 0.25 / 9) + '<span style="font-size:1rem;">g</span>';
+
+                document.getElementById('diet-suggestion').textContent =
+                    diet.suggestion || 'Focus on hitting your daily targets consistently. Prioritise whole foods, lean protein, and stay hydrated.';
+
+                // Recipes
                 const recipeGrid = document.getElementById('recipe-grid');
-                recipeGrid.innerHTML = ''; // Clear existing
-                
-                if (data.diet.recipes && data.diet.recipes.length > 0) {
-                    data.diet.recipes.forEach(recipe => {
+                recipeGrid.innerHTML = '';
+                if (diet.recipes && diet.recipes.length > 0) {
+                    diet.recipes.forEach(recipe => {
                         recipeGrid.innerHTML += `
-                            <a href="${recipe.url}" target="_blank" style="text-decoration: none; color: inherit;">
-                                <div class="recipe-card glass-panel" style="padding: 0;">
-                                    <img src="${recipe.image}" alt="${recipe.title}" class="recipe-image">
-                                    <div class="recipe-content">
-                                        <h4>${recipe.title}</h4>
-                                        <p>🔥 ${recipe.calories} kcal per serving</p>
-                                        <span class="btn btn-accent" style="padding: 0.5rem; font-size: 0.8rem; display: block; text-align: center;">View Recipe</span>
+                            <a href="${recipe.url}" target="_blank" rel="noopener" class="recipe-card">
+                                <img src="${recipe.image}" alt="${recipe.title}" class="recipe-image"
+                                     onerror="this.style.background='rgba(59,130,246,0.1)'; this.removeAttribute('src');">
+                                <div class="recipe-body">
+                                    <h4 title="${recipe.title}">${recipe.title}</h4>
+                                    <div class="recipe-cal-pill">
+                                        <i data-lucide="flame" style="width:12px;height:12px;"></i>
+                                        ${recipe.calories} kcal
                                     </div>
+                                    <div class="recipe-view-btn">View Recipe →</div>
                                 </div>
-                            </a>
-                        `;
+                            </a>`;
                     });
+                    lucide.createIcons();
                 } else {
-                    recipeGrid.innerHTML = '<p style="color: var(--text-muted);">No recipes found. Please check your API keys or try again later.</p>';
+                    recipeGrid.innerHTML = `
+                        <div style="grid-column:1/-1; color:var(--text-muted); text-align:center; padding: 2rem;">
+                            <i data-lucide="utensils-crossed" style="width:32px;height:32px; margin-bottom:0.5rem; display:block; margin-left:auto; margin-right:auto;"></i>
+                            No recipes found. Check your API keys or try again later.
+                        </div>`;
+                    lucide.createIcons();
                 }
 
             } catch (err) {
                 console.error(err);
-                if(err.message === "Profile not found") {
+                if (err.message === 'Profile not found') {
                     window.location.href = 'profile.html';
+                } else {
+                    showToast('Error loading diet plan.', 'error');
                 }
+            } finally {
+                hideLoadingSpinner('diet-content');
             }
         }
 
-        if (getToken()) {
-            loadDiet();
-        }
+        if (getToken()) loadDiet();
     </script>
 </body>
 </html>

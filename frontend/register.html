@@ -3,70 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - AI Fitness Trainer</title>
+    <title>Sign Up — FitAI</title>
+    <meta name="description" content="Create your free FitAI account and start training with real-time AI coaching today.">
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .auth-split {
+            display: flex;
+            min-height: 100vh;
+        }
+        .auth-left {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-right {
+            flex: 1;
+            background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(59,130,246,0.12) 100%);
+            border-left: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            text-align: center;
+        }
+        .step-list { list-style: none; margin: 2rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.25rem; max-width: 300px; }
+        .step-list li { display: flex; align-items: center; gap: 1rem; text-align: left; }
+        .step-num { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; }
+        .step-num.green { background: var(--accent); }
+        .step-num.purple { background: var(--purple-accent); }
+        .step-text h4 { font-size: 0.9rem; font-weight: 700; margin: 0 0 2px; }
+        .step-text p { font-size: 0.82rem; color: var(--text-muted); margin: 0; line-height: 1.5; }
+        .input-wrap { position: relative; display: flex; align-items: center; }
+        .input-wrap input { padding-right: 42px; }
+        .show-password-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; width: auto; display: flex; align-items: center; }
+        .strength-bar { height: 4px; border-radius: 2px; margin-top: 6px; background: rgba(255,255,255,0.08); transition: background 0.3s; position: relative; overflow: hidden; }
+        .strength-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease, background 0.4s ease; width: 0; }
+        .strength-label { font-size: 0.75rem; margin-top: 4px; color: var(--text-muted); }
+        .btn-loading .btn-text { display: none; }
+        .btn-loading .btn-spinner { display: flex !important; }
+    </style>
 </head>
 <body>
-    <nav>
-        <a href="index.html" class="logo">FitAI.</a>
-        <div class="links">
-            <a href="login.html" class="btn btn-outline" style="padding: 0.5rem 1rem;">Login</a>
-        </div>
-    </nav>
-    <div class="container center-box">
-        <div class="glass-panel auth-form" style="padding: 3rem 2rem;">
-            <div style="text-align: center; margin-bottom: 2rem;">
-                <i data-lucide="user-plus" style="width: 48px; height: 48px; color: var(--accent); margin-bottom: 1rem;"></i>
-                <h2 class="gradient-text">Create Account</h2>
-                <p>Join FitAI and start your transformation.</p>
+    <div class="auth-split">
+        <!-- Left: Form -->
+        <div class="auth-left">
+            <div style="width: 100%; max-width: 420px;">
+                <a href="index.html" class="logo" style="display:inline-block; margin-bottom: 2rem;">FitAI.</a>
+
+                <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">Create your account</h2>
+                <p style="margin-bottom: 2rem;">Free forever. No credit card needed.</p>
+
+                <div id="error-msg" class="error-msg hidden"></div>
+
+                <form id="register-form" novalidate>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <div class="input-wrap">
+                            <input type="text" id="username" required placeholder="Choose a username" autocomplete="username" minlength="3">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <div class="input-wrap">
+                            <input type="email" id="email" required placeholder="your@email.com" autocomplete="email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-wrap">
+                            <input type="password" id="password" required placeholder="Min. 8 characters" autocomplete="new-password" minlength="8">
+                            <button type="button" class="show-password-btn" onclick="togglePw()" aria-label="Show/hide password">
+                                <i data-lucide="eye" id="pw-eye" style="width:18px;height:18px;"></i>
+                            </button>
+                        </div>
+                        <div class="strength-bar">
+                            <div class="strength-bar-fill" id="strength-fill"></div>
+                        </div>
+                        <div class="strength-label" id="strength-label"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-accent" id="register-btn" style="margin-top: 1.25rem;">
+                        <span class="btn-text" style="display:flex; align-items:center; gap:8px; justify-content:center;">
+                            <i data-lucide="user-plus" style="width:18px;height:18px;"></i> Create Account
+                        </span>
+                        <span class="btn-spinner" style="display:none; align-items:center; gap:8px; justify-content:center;">
+                            <i data-lucide="loader-2" class="spin-icon" style="width:18px;height:18px;"></i> Creating account...
+                        </span>
+                    </button>
+                </form>
+
+                <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem;">
+                    Already have an account? <a href="login.html" style="color: var(--primary); font-weight: 600; text-decoration: none;">Sign in →</a>
+                </p>
             </div>
-            <div id="error-msg" class="error-msg hidden"></div>
-            <form id="register-form">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="username" required placeholder="Choose a username">
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="email" required placeholder="your@email.com">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="password" required placeholder="••••••••">
-                </div>
-                <button type="submit" class="btn btn-accent" style="margin-top: 1rem;">Sign Up</button>
-            </form>
+        </div>
+
+        <!-- Right: How it works -->
+        <div class="auth-right">
+            <div class="gradient-text" style="font-size: 1.4rem; font-weight: 800;">Get Started in Minutes</div>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">Three simple steps to your personalised fitness plan.</p>
+
+            <ul class="step-list">
+                <li style="animation: fadeInUp 0.5s 0.1s ease-out both;">
+                    <div class="step-num">1</div>
+                    <div class="step-text">
+                        <h4>Create Your Account</h4>
+                        <p>Sign up in seconds — username, email, password. Done.</p>
+                    </div>
+                </li>
+                <li style="animation: fadeInUp 0.5s 0.2s ease-out both;">
+                    <div class="step-num green">2</div>
+                    <div class="step-text">
+                        <h4>Set Up Your Profile</h4>
+                        <p>Enter your height, weight, goal, and available equipment.</p>
+                    </div>
+                </li>
+                <li style="animation: fadeInUp 0.5s 0.3s ease-out both;">
+                    <div class="step-num purple">3</div>
+                    <div class="step-text">
+                        <h4>Start Training</h4>
+                        <p>Get AI-generated workouts, live coaching, and track every gain.</p>
+                    </div>
+                </li>
+            </ul>
         </div>
     </div>
+
     <script src="script.js"></script>
     <script>
         lucide.createIcons();
+
+        function togglePw() {
+            const input = document.getElementById('password');
+            const eye = document.getElementById('pw-eye');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                eye.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        // Password strength meter
+        document.getElementById('password').addEventListener('input', function() {
+            const val = this.value;
+            const fill = document.getElementById('strength-fill');
+            const label = document.getElementById('strength-label');
+            let strength = 0;
+            if (val.length >= 8) strength++;
+            if (/[A-Z]/.test(val)) strength++;
+            if (/[0-9]/.test(val)) strength++;
+            if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+            const widths = ['0%', '25%', '50%', '75%', '100%'];
+            const colors = ['transparent', '#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
+            const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+
+            fill.style.width = widths[strength];
+            fill.style.background = colors[strength];
+            label.textContent = labels[strength];
+            label.style.color = colors[strength];
+        });
+
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('error-msg');
-            
+            const btn = document.getElementById('register-btn');
+
+            errorDiv.classList.add('hidden');
+
+            if (username.length < 3) {
+                errorDiv.textContent = 'Username must be at least 3 characters.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            if (password.length < 8) {
+                errorDiv.textContent = 'Password must be at least 8 characters.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            btn.classList.add('btn-loading');
+
             try {
-                await apiCall('/register', 'POST', {
-                    username: username,
-                    email: email,
-                    password: password
-                });
-                
-                // Auto login
+                await apiCall('/register', 'POST', { username, email, password });
+
                 const params = new URLSearchParams();
                 params.append('username', username);
                 params.append('password', password);
-                
                 const data = await apiCall('/auth/login', 'POST', params);
                 setToken(data.access_token);
-                window.location.href = 'dashboard.html';
+
+                showToast('Account created! Setting up your profile...');
+                setTimeout(() => window.location.href = 'profile.html', 900);
             } catch (err) {
-                errorDiv.textContent = err.message;
+                errorDiv.textContent = '❌ ' + err.message;
                 errorDiv.classList.remove('hidden');
+                btn.classList.remove('btn-loading');
             }
         });
     </script>

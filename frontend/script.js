@@ -227,4 +227,45 @@ function hideLoadingSpinner(containerId) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', checkAuth);
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    highlightActiveNavLink();
+    injectBackToTop();
+});
+
+// Auto-highlight the nav link that matches the current page
+function highlightActiveNavLink() {
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    document.querySelectorAll('nav .links a').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && href !== '#' && currentPage === href) {
+            link.classList.add('active-page');
+        }
+    });
+}
+
+// Inject a back-to-top button once and wire up scroll visibility
+function injectBackToTop() {
+    if (document.getElementById('back-to-top')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'back-to-top';
+    btn.setAttribute('aria-label', 'Back to top');
+    btn.setAttribute('data-tip', 'Back to top');
+    btn.innerHTML = '<i data-lucide="chevron-up" style="width:20px;height:20px;"></i>';
+    document.body.appendChild(btn);
+
+    if (window.lucide) lucide.createIcons({ root: btn });
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            btn.classList.add('visible');
+        } else {
+            btn.classList.remove('visible');
+        }
+    }, { passive: true });
+
+    btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
