@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <!-- Include icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <nav>
@@ -49,6 +50,15 @@
                 <h3 style="color: var(--text-muted); font-size: 1rem;">Current Streak</h3>
                 <div class="metric-value" style="color: #f59e0b;" id="workout-streak">--</div>
                 <div style="color: var(--text-muted); font-size: 0.9rem;">Keep it up! 🔥</div>
+            </div>
+
+            <!-- Badges Widget -->
+            <div class="bento-item glass-panel" style="grid-column: span 4; grid-row: span 1; justify-content: center; align-items: center; text-align: center; cursor: pointer;" onclick="window.location.href='challenges.html'">
+                <h3 style="color: var(--text-muted); font-size: 1rem;">Badges Earned</h3>
+                <div class="metric-value" style="color: var(--primary);" id="badge-count">--</div>
+                <div style="display: flex; gap: 5px; justify-content: center; margin-top: 5px;" id="badge-icons">
+                    <!-- filled by JS -->
+                </div>
             </div>
 
             <!-- Recent Live Coach Session Widget -->
@@ -101,10 +111,26 @@
                 </div>
                 <a href="diet.html" class="btn btn-outline" style="width: auto;">View Plan</a>
             </div>
+
+            <!-- 1RM PR Widget -->
+            <div class="bento-item glass-panel" style="grid-column: span 12; grid-row: span 2; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="color: var(--text-muted); font-size: 1rem;"><i data-lucide="trending-up" style="vertical-align: middle;"></i> 1RM Progress</h3>
+                    <select id="pr-exercise-select" onchange="render1RMChart(this.value, '1rm-chart')" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-light); color: white; padding: 5px; border-radius: 5px;">
+                        <option value="Squats">Squats</option>
+                        <option value="Bench Press">Bench Press</option>
+                        <option value="Deadlifts">Deadlifts</option>
+                    </select>
+                </div>
+                <div style="flex-grow: 1; min-height: 250px; position: relative;">
+                    <canvas id="1rm-chart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="script.js"></script>
+    <script src="progress.js"></script>
     <script>
         lucide.createIcons();
         
@@ -116,6 +142,7 @@
                     loadRecommendations();
                     loadAnalytics();
                     loadRecentLiveWorkout();
+                    setTimeout(() => render1RMChart(document.getElementById('pr-exercise-select').value, '1rm-chart'), 500);
                 } catch (e) {
                     if(e.message === "Profile not found") {
                         window.location.href = 'profile.html';
@@ -145,6 +172,15 @@
 
                 const dashData = await apiCall('/dashboard-data');
                 document.getElementById('workout-streak').textContent = dashData.streak + ' days';
+                
+                const badgesData = await apiCall('/badges').catch(() => []);
+                document.getElementById('badge-count').textContent = badgesData.length;
+                
+                const iconsContainer = document.getElementById('badge-icons');
+                iconsContainer.innerHTML = badgesData.slice(0, 3).map(b => `<img src="${b.icon_url}" style="width: 24px; height: 24px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" title="${b.name}">`).join('');
+                if (badgesData.length > 3) {
+                    iconsContainer.innerHTML += `<span style="font-size: 0.8rem; color: var(--text-muted); align-self: center;">+${badgesData.length - 3}</span>`;
+                }
             } catch (err) {
                 console.error(err);
             }

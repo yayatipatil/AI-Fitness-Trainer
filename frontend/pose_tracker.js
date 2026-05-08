@@ -35,6 +35,11 @@ function showFeedback(text, colorClass = "var(--primary)") {
     feedbackEl.style.display = "block";
     feedbackEl.style.background = colorClass === "red" ? "rgba(220, 38, 38, 0.9)" : `rgba(59, 130, 246, 0.9)`;
     
+    // Audio feedback
+    if (window.audioCoach) {
+        window.audioCoach.speak(text, colorClass === "red");
+    }
+    
     setTimeout(() => {
         feedbackEl.style.display = "none";
     }, 1500);
@@ -95,6 +100,11 @@ function onResults(results) {
                         repCount++;
                         repCountEl.textContent = repCount;
                         showFeedback("Good Rep!");
+                        if (repCount % 5 === 0) {
+                            setTimeout(() => {
+                                if (window.audioCoach) window.audioCoach.speak(`You have done ${repCount} reps. Keep it up!`, true);
+                            }, 500);
+                        }
                     }
                     stage = "up";
                     statusTextEl.textContent = `Status: Standing (${Math.round(angle)}°)`;
@@ -203,6 +213,11 @@ function onResults(results) {
                         repCount++;
                         repCountEl.textContent = repCount;
                         showFeedback("Good Rep!");
+                        if (repCount % 5 === 0) {
+                            setTimeout(() => {
+                                if (window.audioCoach) window.audioCoach.speak(`You have done ${repCount} reps. Keep it up!`, true);
+                            }, 500);
+                        }
                     }
                     stage = "up";
                     statusTextEl.textContent = `Status: Up (${Math.round(angle)}°)`;

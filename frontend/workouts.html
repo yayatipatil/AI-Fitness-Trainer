@@ -28,6 +28,30 @@
         <div style="margin-bottom: 2rem;">
             <h1 class="gradient-text">Your Recommended Workouts</h1>
             <p>Based on your profile, here are multiple workout options for today. Choose the one that fits your schedule.</p>
+            
+            <div style="margin-top: 1.5rem;">
+                <label style="font-weight: 600; margin-right: 1rem;">Session Duration:</label>
+                <div style="display: inline-flex; gap: 10px;" id="duration-pills">
+                    <button class="btn btn-outline duration-btn" data-time="15" onclick="setDuration(15)" style="padding: 5px 15px; border-radius: 20px;">15m</button>
+                    <button class="btn btn-primary duration-btn active" data-time="30" onclick="setDuration(30)" style="padding: 5px 15px; border-radius: 20px;">30m</button>
+                    <button class="btn btn-outline duration-btn" data-time="45" onclick="setDuration(45)" style="padding: 5px 15px; border-radius: 20px;">45m</button>
+                    <button class="btn btn-outline duration-btn" data-time="60" onclick="setDuration(60)" style="padding: 5px 15px; border-radius: 20px;">60m</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timer Banner -->
+        <div id="workout-timer-banner" style="display: none; background: rgba(59, 130, 246, 0.2); border: 1px solid var(--primary); border-radius: 10px; padding: 15px; margin-bottom: 2rem; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <i data-lucide="clock" style="color: var(--primary);"></i>
+                <div>
+                    <h4 style="margin: 0; color: white;">Active Session</h4>
+                    <span id="timer-display" style="font-size: 1.5rem; font-weight: bold; color: var(--accent);">00:00</span>
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-outline" onclick="stopTimer()" style="border-color: var(--danger); color: var(--danger);">End Early</button>
+            </div>
         </div>
 
         <div class="dashboard-grid" id="workouts-container" style="margin-bottom: 3rem;">
@@ -68,12 +92,65 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="exercise-demo.js"></script>
     <script>
         lucide.createIcons();
         
+        let selectedDuration = 30;
+        let timerInterval = null;
+        let timeRemaining = 0;
+
+        function setDuration(mins) {
+            selectedDuration = mins;
+            document.querySelectorAll('.duration-btn').forEach(btn => {
+                if (parseInt(btn.dataset.time) === mins) {
+                    btn.className = 'btn btn-primary duration-btn active';
+                } else {
+                    btn.className = 'btn btn-outline duration-btn';
+                }
+            });
+            loadWorkouts();
+        }
+
+        function startWorkoutTimer(mins) {
+            const banner = document.getElementById('workout-timer-banner');
+            const display = document.getElementById('timer-display');
+            banner.style.display = 'flex';
+            
+            timeRemaining = mins * 60;
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                const m = Math.floor(timeRemaining / 60);
+                const s = timeRemaining % 60;
+                display.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    display.textContent = "00:00";
+                    alert("Workout complete! Great job!");
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('workout-timer-banner').style.display = 'none';
+        }
+        
         async function loadWorkouts() {
             try {
-                const data = await apiCall('/recommend-workout');
+                // Fetch workouts and all exercises
+                const [data, allExercises] = await Promise.all([
+                    apiCall(`/recommend-workout?duration_minutes=${selectedDuration}`),
+                    apiCall('/exercises').catch(() => [])
+                ]);
+                
+                const exercisesMap = {};
+                allExercises.forEach(ex => {
+                    exercisesMap[ex.name.toLowerCase()] = ex;
+                });
                 
                 const container = document.getElementById('workouts-container');
                 const selectType = document.getElementById('w-type');
@@ -87,24 +164,44 @@
                     card.className = 'glass-panel';
                     card.style.position = 'relative';
                     card.style.overflow = 'hidden';
+                    card.style.display = 'flex';
+                    card.style.flexDirection = 'column';
+                    card.style.gap = '15px';
                     
                     let exercisesHtml = '';
                     workout.exercises.forEach(ex => {
-                        exercisesHtml += `<li style="background: rgba(0,0,0,0.3); padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 600;">${ex.name}</span> 
-                            <span style="color: var(--primary); font-size: 0.9rem;">${ex.sets} sets x ${ex.reps}</span>
-                        </li>`;
+                        const exData = exercisesMap[ex.name.toLowerCase()];
+                        if (exData) {
+                            exercisesHtml += `
+                                <div style="margin-bottom: 10px;">
+                                    <div style="color: var(--primary); font-size: 0.9rem; margin-bottom: 5px; font-weight: bold;">
+                                        🎯 Target: ${ex.sets} sets x ${ex.reps}
+                                    </div>
+                                    ${renderExerciseCard(exData, true)}
+                                </div>
+                            `;
+                        } else {
+                            exercisesHtml += `<li style="background: rgba(0,0,0,0.3); padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 600;">${ex.name}</span> 
+                                <span style="color: var(--primary); font-size: 0.9rem;">${ex.sets} sets x ${ex.reps}</span>
+                            </li>`;
+                        }
                     });
                     
                     card.innerHTML = `
-                        <div style="position: absolute; top: 0; right: 0; padding: 1rem; opacity: 0.1; color: var(--primary);">
+                        <div style="position: absolute; top: 0; right: 0; padding: 1rem; opacity: 0.1; color: var(--primary); z-index: 0;">
                             <i data-lucide="dumbbell" style="width: 60px; height: 60px;"></i>
                         </div>
                         <h3 style="color: var(--primary); margin-bottom: 0.5rem; font-size: 1.4rem; z-index: 1; position: relative;">${workout.type}</h3>
-                        <p style="font-size: 0.9rem; margin-bottom: 1.5rem; z-index: 1; position: relative;">Rest Time: <strong style="color: white;">${workout.rest_time}</strong></p>
-                        <ul style="list-style: none; padding: 0; z-index: 1; position: relative;">
+                        <p style="font-size: 0.9rem; margin-bottom: 1rem; z-index: 1; position: relative;">Rest Time: <strong style="color: white;">${workout.rest_time}</strong></p>
+                        
+                        <div style="margin-bottom: 1.5rem; z-index: 1; position: relative;">
+                            <button class="btn btn-accent" style="width: 100%;" onclick="startWorkoutTimer(${selectedDuration})">Start This Workout</button>
+                        </div>
+                        
+                        <div style="z-index: 1; position: relative; flex-grow: 1;">
                             ${exercisesHtml}
-                        </ul>
+                        </div>
                     `;
                     
                     container.appendChild(card);

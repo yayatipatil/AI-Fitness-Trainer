@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from typing import List
+import json
 
 import models, database, auth, recommendation
 from ml import model as ml_model, features as ml_features
@@ -72,14 +73,23 @@ def update_me(user_update: models.UserUpdate, current_user: models.User = Depend
     return current_user
 
 @app.get("/recommend-workout")
-def get_workout(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+def get_workout(duration_minutes: int = 30, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     if not current_user.fitness_goal or not current_user.experience_level:
         raise HTTPException(status_code=400, detail="Profile required for recommendations")
     
+    eq_record = db.query(models.UserEquipment).filter(models.UserEquipment.user_id == current_user.id).first()
+    user_eq = json.loads(eq_record.equipment) if eq_record else []
+
+    all_ex = db.query(models.Exercise).all()
+    db_exercises = {ex.name: json.loads(ex.equipment) for ex in all_ex}
+
     workout_plan = recommendation.get_workout_recommendation(
         goal=current_user.fitness_goal if current_user.fitness_goal else "Maintenance",
         experience_level=current_user.experience_level if current_user.experience_level else "Beginner",
-        intensity_modifier=current_user.intensity_modifier
+        intensity_modifier=current_user.intensity_modifier,
+        duration_minutes=duration_minutes,
+        user_equipment=user_eq,
+        db_exercises=db_exercises
     )
     
     diet_plan = recommendation.get_diet_recommendation(
@@ -95,6 +105,40 @@ def get_workout(current_user: models.User = Depends(auth.get_current_user), db: 
         "diet": diet_plan
     }
 
+def check_and_update_challenges(user: models.User, log: models.WorkoutLogCreate, db: Session):
+    # Get user challenges
+    user_challenges = db.query(models.UserChallenge).filter(
+        models.UserChallenge.user_id == user.id,
+        models.UserChallenge.completed == False
+    ).all()
+    
+    from datetime import datetime
+    
+    for uc in user_challenges:
+        challenge = db.query(models.Challenge).filter(models.Challenge.id == uc.challenge_id).first()
+        if not challenge: continue
+        
+        if challenge.metric == "workouts":
+            uc.progress += 1
+        elif challenge.metric == "calories":
+            uc.progress += log.calories_burned
+        # Note: Streak is harder to track incrementally here, but let's assume we do it on load or simplified.
+        # For this demo, we'll just track workouts and calories
+        
+        if uc.progress >= challenge.target_value:
+            uc.completed = True
+            uc.completed_at = datetime.utcnow()
+            uc.progress = challenge.target_value
+            
+            # Award badge
+            if challenge.badge_url:
+                badge = models.Badge(
+                    user_id=user.id,
+                    name=challenge.title,
+                    icon_url=challenge.badge_url
+                )
+                db.add(badge)
+
 @app.post("/log-workout", response_model=models.WorkoutLogResponse)
 def log_workout(log: models.WorkoutLogCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     new_log = models.WorkoutLog(**log.dict(), user_id=current_user.id)
@@ -106,6 +150,8 @@ def log_workout(log: models.WorkoutLogCreate, current_user: models.User = Depend
         log.difficulty_feedback
     )
     current_user.intensity_modifier = new_modifier
+    
+    check_and_update_challenges(current_user, log, db)
         
     db.commit()
     db.refresh(new_log)
@@ -125,10 +171,85 @@ def log_live_workout(log: models.WorkoutLogCreate, current_user: models.User = D
             log.difficulty_feedback
         )
     current_user.intensity_modifier = new_modifier
+    
+    check_and_update_challenges(current_user, log, db)
         
     db.commit()
     db.refresh(new_log)
     return new_log
+
+@app.get("/challenges")
+def get_challenges(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    all_challenges = db.query(models.Challenge).all()
+    user_challenges = db.query(models.UserChallenge).filter(models.UserChallenge.user_id == current_user.id).all()
+    
+    # create dict for fast lookup
+    uc_dict = {uc.challenge_id: uc for uc in user_challenges}
+    
+    result = []
+    for c in all_challenges:
+        uc = uc_dict.get(c.id)
+        if uc:
+            result.append({
+                "id": uc.id,
+                "challenge": c,
+                "progress": uc.progress,
+                "completed": uc.completed,
+                "completed_at": uc.completed_at
+            })
+        else:
+            # Create the tracking record if it doesn't exist
+            new_uc = models.UserChallenge(user_id=current_user.id, challenge_id=c.id)
+            db.add(new_uc)
+            db.commit()
+            db.refresh(new_uc)
+            result.append({
+                "id": new_uc.id,
+                "challenge": c,
+                "progress": new_uc.progress,
+                "completed": new_uc.completed,
+                "completed_at": new_uc.completed_at
+            })
+            
+    return result
+
+@app.get("/badges", response_model=List[models.BadgeResponse])
+def get_badges(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    badges = db.query(models.Badge).filter(models.Badge.user_id == current_user.id).all()
+    return badges
+
+
+@app.post("/set-logs", response_model=models.SetLogResponse)
+def log_set(set_log: models.SetLogCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    db_set = models.SetLog(**set_log.dict(), user_id=current_user.id)
+    db.add(db_set)
+    db.commit()
+    db.refresh(db_set)
+    
+    # Return with calculated 1RM
+    resp = db_set.__dict__.copy()
+    resp["estimated_1rm"] = db_set.calculate_1rm()
+    return resp
+
+@app.get("/set-logs/1rm/{exercise_name}")
+def get_1rm_history(exercise_name: str, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    logs = db.query(models.SetLog).filter(
+        models.SetLog.user_id == current_user.id,
+        models.SetLog.exercise_name == exercise_name
+    ).order_by(models.SetLog.date.asc()).all()
+    
+    # We want to group by date or just return points
+    # Let's return raw points for the chart
+    history = []
+    for log in logs:
+        history.append({
+            "date": log.date.strftime("%Y-%m-%d"),
+            "estimated_1rm": log.calculate_1rm(),
+            "weight": log.weight_kg,
+            "reps": log.reps
+        })
+        
+    return {"exercise": exercise_name, "history": history}
 
 @app.get("/fitness-score")
 def get_fitness_score(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
@@ -203,16 +324,96 @@ def get_planner_suggestions(current_user: models.User = Depends(auth.get_current
     unique_suggs = {s["exercise"]: s for s in suggestions}.values()
     return list(unique_suggs)
 
+@app.get("/exercises", response_model=List[models.ExerciseResponse])
+def get_exercises(db: Session = Depends(database.get_db)):
+    return db.query(models.Exercise).all()
+
+@app.get("/exercises/{name}", response_model=models.ExerciseResponse)
+def get_exercise_by_name(name: str, db: Session = Depends(database.get_db)):
+    exercise = db.query(models.Exercise).filter(models.Exercise.name == name).first()
+    if not exercise:
+        raise HTTPException(status_code=404, detail="Exercise not found")
+    return exercise
+
+@app.get("/user/equipment", response_model=models.UserEquipmentResponse)
+def get_user_equipment(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    equipment = db.query(models.UserEquipment).filter(models.UserEquipment.user_id == current_user.id).first()
+    if not equipment:
+        return {"user_id": current_user.id, "equipment": []}
+    return {"user_id": equipment.user_id, "equipment": json.loads(equipment.equipment)}
+
+@app.put("/user/equipment", response_model=models.UserEquipmentResponse)
+def update_user_equipment(update_data: models.UserEquipmentUpdate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    equipment = db.query(models.UserEquipment).filter(models.UserEquipment.user_id == current_user.id).first()
+    if not equipment:
+        equipment = models.UserEquipment(user_id=current_user.id, equipment=json.dumps(update_data.equipment))
+        db.add(equipment)
+    else:
+        equipment.equipment = json.dumps(update_data.equipment)
+    db.commit()
+    db.refresh(equipment)
+    return {"user_id": equipment.user_id, "equipment": json.loads(equipment.equipment)}
+
+@app.get("/exercises/swap")
+def get_exercise_swap(name: str, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    target_ex = db.query(models.Exercise).filter(models.Exercise.name == name).first()
+    if not target_ex:
+        raise HTTPException(status_code=404, detail="Exercise not found")
+        
+    user_eq_record = db.query(models.UserEquipment).filter(models.UserEquipment.user_id == current_user.id).first()
+    user_eq = json.loads(user_eq_record.equipment) if user_eq_record else []
+    
+    # Simple logic: Same category, not same exercise
+    candidates = db.query(models.Exercise).filter(
+        models.Exercise.category == target_ex.category,
+        models.Exercise.name != target_ex.name
+    ).all()
+    
+    # Score candidates: prioritize if their equipment matches user's equipment or is bodyweight
+    scored = []
+    for c in candidates:
+        c_eq = json.loads(c.equipment)
+        score = 0
+        if "bodyweight" in c_eq:
+            score += 1
+        for eq in c_eq:
+            if eq in user_eq:
+                score += 2
+        scored.append((score, c))
+    
+    if not scored:
+        raise HTTPException(status_code=404, detail="No swap found")
+        
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return scored[0][1]
+
+
 @app.get("/dashboard-data")
 def get_dashboard_data(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
-    logs = current_user.workout_logs
+    logs = db.query(models.WorkoutLog).filter(models.WorkoutLog.user_id == current_user.id).order_by(models.WorkoutLog.date.desc()).all()
     
     # Aggregate data for charts
-    dates = [log.date.strftime("%Y-%m-%d") for log in logs[-7:]] # Last 7 logs
-    calories = [log.calories_burned for log in logs[-7:]]
+    dates = [log.date.strftime("%Y-%m-%d") for log in reversed(logs[:7])] # Last 7 logs
+    calories = [log.calories_burned for log in reversed(logs[:7])]
     
-    # Calculate streak (simple version)
-    streak = len(logs) if logs else 0
+    # Calculate streak (consecutive days)
+    streak = 0
+    if logs:
+        from datetime import datetime
+        
+        current_date = datetime.utcnow().date()
+        last_log_date = logs[0].date.date()
+        
+        if (current_date - last_log_date).days <= 1:
+            streak = 1
+            for i in range(1, len(logs)):
+                diff = (logs[i-1].date.date() - logs[i].date.date()).days
+                if diff == 1:
+                    streak += 1
+                elif diff == 0:
+                    continue # same day
+                else:
+                    break
     
     return {
         "dates": dates,

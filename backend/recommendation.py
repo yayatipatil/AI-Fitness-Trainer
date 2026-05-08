@@ -108,16 +108,33 @@ def fetch_edamam_recipes(target_calories: int) -> list:
     return []
 
 
-def get_workout_recommendation(goal: str, experience_level: str, intensity_modifier: float) -> list:
-    # Base sets and reps
-    base_sets = 3
-    base_reps = 10
-    
-    if experience_level.lower() == 'beginner':
+def get_workout_recommendation(goal: str, experience_level: str, intensity_modifier: float, duration_minutes: int = 30, user_equipment: list = None, db_exercises: dict = None) -> list:
+    if user_equipment is None:
+        user_equipment = []
+    if db_exercises is None:
+        db_exercises = {}
+        
+    # Scale sets and exercise count by duration
+    if duration_minutes <= 5:
         base_sets = 2
+        ex_count = 1
+    elif duration_minutes <= 15:
+        base_sets = 2
+        ex_count = 3
+    elif duration_minutes <= 30:
+        base_sets = 3
+        ex_count = 5
+    elif duration_minutes <= 45:
+        base_sets = 4
+        ex_count = 6
+    else:
+        base_sets = 4
+        ex_count = 8
+        
+    base_reps = 10
+    if experience_level.lower() == 'beginner':
         base_reps = 12
     elif experience_level.lower() == 'advanced':
-        base_sets = 4
         base_reps = 8
         
     # Apply adaptive intensity
@@ -126,105 +143,64 @@ def get_workout_recommendation(goal: str, experience_level: str, intensity_modif
     
     plans = []
     
+    # We will generate base plans and then filter/slice them
     if goal.lower() == 'weight loss':
-        plans = [
-            {
-                "type": "High Intensity Interval Training (HIIT) & Cardio",
-                "rest_time": "60 seconds",
-                "exercises": [
-                    {"name": "Jumping Jacks", "sets": adjusted_sets, "reps": adjusted_reps + 5},
-                    {"name": "Burpees", "sets": adjusted_sets, "reps": max(5, adjusted_reps - 2)},
-                    {"name": "Mountain Climbers", "sets": adjusted_sets, "reps": adjusted_reps + 5},
-                    {"name": "Bodyweight Squats", "sets": adjusted_sets, "reps": adjusted_reps}
-                ]
-            },
-            {
-                "type": "Cardio Core Burner",
-                "rest_time": "45 seconds",
-                "exercises": [
-                    {"name": "High Knees", "sets": adjusted_sets, "reps": f"{int(30 * intensity_modifier)} sec"},
-                    {"name": "Bicycle Crunches", "sets": adjusted_sets, "reps": adjusted_reps * 2},
-                    {"name": "Plank Jacks", "sets": adjusted_sets, "reps": adjusted_reps},
-                    {"name": "Jump Squats", "sets": adjusted_sets, "reps": max(5, adjusted_reps - 2)}
-                ]
-            },
-            {
-                "type": "Active Recovery / Low Impact",
-                "rest_time": "90 seconds",
-                "exercises": [
-                    {"name": "Brisk Walking", "sets": 1, "reps": f"{int(20 * intensity_modifier)} mins"},
-                    {"name": "Glute Bridges", "sets": adjusted_sets, "reps": adjusted_reps},
-                    {"name": "Bird Dogs", "sets": adjusted_sets, "reps": adjusted_reps},
-                    {"name": "Modified Push-ups", "sets": adjusted_sets, "reps": adjusted_reps}
-                ]
-            }
+        base_plans = [
+            {"type": "High Intensity Interval Training (HIIT) & Cardio", "rest_time": "60 seconds", "exercises": ["Jumping Jacks", "Burpees", "Mountain Climbers", "Bodyweight Squats", "Kettlebell Swings", "Lunges", "High Knees", "Plank"]},
+            {"type": "Cardio Core Burner", "rest_time": "45 seconds", "exercises": ["High Knees", "Bicycle Crunches", "Plank Jacks", "Jump Squats", "Russian Twists", "Burpees", "Mountain Climbers", "Leg Press"]},
+            {"type": "Active Recovery / Low Impact", "rest_time": "90 seconds", "exercises": ["Glute Bridges", "Bird Dogs", "Modified Push-ups", "Calf Raises", "Lat Pulldown", "Face Pulls", "Squats", "Plank"]}
         ]
     elif goal.lower() == 'muscle gain':
-        plans = [
-            {
-                "type": "Hypertrophy Strength Training (Upper Body)",
-                "rest_time": "90 seconds",
-                "exercises": [
-                    {"name": "Push-ups", "sets": adjusted_sets, "reps": adjusted_reps},
-                    {"name": "Pull-ups / Inverted Rows", "sets": adjusted_sets, "reps": max(5, adjusted_reps - 2)},
-                    {"name": "Tricep Dips", "sets": adjusted_sets, "reps": adjusted_reps},
-                    {"name": "Plank", "sets": adjusted_sets, "reps": f"{int(45 * intensity_modifier)} sec"}
-                ]
-            },
-            {
-                "type": "Hypertrophy Strength Training (Lower Body)",
-                "rest_time": "90 seconds",
-                "exercises": [
-                    {"name": "Bulgarian Split Squats", "sets": adjusted_sets, "reps": max(5, adjusted_reps - 2)},
-                    {"name": "Lunges", "sets": adjusted_sets, "reps": adjusted_reps},
-                    {"name": "Glute Bridges", "sets": adjusted_sets, "reps": adjusted_reps + 5},
-                    {"name": "Calf Raises", "sets": adjusted_sets, "reps": adjusted_reps + 5}
-                ]
-            },
-            {
-                "type": "Full Body Power",
-                "rest_time": "120 seconds",
-                "exercises": [
-                    {"name": "Explosive Push-ups", "sets": adjusted_sets, "reps": max(5, adjusted_reps - 4)},
-                    {"name": "Jump Squats", "sets": adjusted_sets, "reps": adjusted_reps},
-                    {"name": "Burpees", "sets": adjusted_sets, "reps": max(5, adjusted_reps - 2)},
-                    {"name": "Hollow Body Hold", "sets": adjusted_sets, "reps": f"{int(30 * intensity_modifier)} sec"}
-                ]
-            }
+        base_plans = [
+            {"type": "Hypertrophy Strength Training (Upper Body)", "rest_time": "90 seconds", "exercises": ["Push-ups", "Pull-ups", "Tricep Dips", "Bench Press", "Overhead Press", "Bicep Curls", "Lat Pulldown", "Cable Crossovers", "Face Pulls"]},
+            {"type": "Hypertrophy Strength Training (Lower Body)", "rest_time": "90 seconds", "exercises": ["Squats", "Lunges", "Deadlifts", "Calf Raises", "Glute Bridges", "Leg Press", "Kettlebell Swings"]},
+            {"type": "Full Body Power", "rest_time": "120 seconds", "exercises": ["Squats", "Bench Press", "Deadlifts", "Pull-ups", "Overhead Press", "Burpees", "Tricep Dips", "Bicep Curls"]}
         ]
     else: # Maintenance
-        plans = [
-            {
-                "type": "Balanced Functional Training",
-                "rest_time": "60 seconds",
-                "exercises": [
-                    {"name": "Squats", "sets": adjusted_sets, "reps": adjusted_reps},
-                    {"name": "Push-ups", "sets": adjusted_sets, "reps": adjusted_reps},
-                    {"name": "Sit-ups", "sets": adjusted_sets, "reps": adjusted_reps},
-                    {"name": "Jogging", "sets": 1, "reps": f"{int(15 * intensity_modifier)} mins"}
-                ]
-            },
-            {
-                "type": "Core & Mobility",
-                "rest_time": "45 seconds",
-                "exercises": [
-                    {"name": "Plank", "sets": adjusted_sets, "reps": f"{int(45 * intensity_modifier)} sec"},
-                    {"name": "Russian Twists", "sets": adjusted_sets, "reps": adjusted_reps * 2},
-                    {"name": "Cat-Cow Stretch", "sets": 2, "reps": "10 reps"},
-                    {"name": "Downward Dog", "sets": 2, "reps": "30 sec hold"}
-                ]
-            },
-            {
-                "type": "Endurance Circuit",
-                "rest_time": "30 seconds",
-                "exercises": [
-                    {"name": "Jumping Jacks", "sets": adjusted_sets, "reps": adjusted_reps * 2},
-                    {"name": "High Knees", "sets": adjusted_sets, "reps": f"{int(30 * intensity_modifier)} sec"},
-                    {"name": "Lunges", "sets": adjusted_sets, "reps": adjusted_reps},
-                    {"name": "Side Plank", "sets": adjusted_sets, "reps": f"{int(30 * intensity_modifier)} sec/side"}
-                ]
-            }
+        base_plans = [
+            {"type": "Balanced Functional Training", "rest_time": "60 seconds", "exercises": ["Squats", "Push-ups", "Lunges", "Pull-ups", "Plank", "Deadlifts", "Overhead Press"]},
+            {"type": "Core & Mobility", "rest_time": "45 seconds", "exercises": ["Plank", "Russian Twists", "Glute Bridges", "Mountain Climbers", "Bicycle Crunches", "Bird Dogs"]},
+            {"type": "Endurance Circuit", "rest_time": "30 seconds", "exercises": ["Jumping Jacks", "High Knees", "Lunges", "Burpees", "Mountain Climbers", "Squats", "Push-ups"]}
         ]
+        
+    for bp in base_plans:
+        filtered_exercises = []
+        for ex_name in bp["exercises"]:
+            # check equipment
+            req_eq = db_exercises.get(ex_name, ["bodyweight"])
+            
+            can_do = False
+            if "bodyweight" in req_eq:
+                can_do = True
+            else:
+                for eq in req_eq:
+                    if eq in user_equipment or eq == "bodyweight":
+                        can_do = True
+                        break
+            
+            if can_do:
+                # Add exercise with reps/sets
+                reps_val = adjusted_reps
+                if "Plank" in ex_name or "Hold" in ex_name:
+                    reps_val = f"{int(30 * intensity_modifier)} sec"
+                elif "Jacks" in ex_name or "High Knees" in ex_name:
+                    reps_val = f"{int(45 * intensity_modifier)} sec"
+                
+                filtered_exercises.append({
+                    "name": ex_name,
+                    "sets": adjusted_sets,
+                    "reps": reps_val
+                })
+            
+            if len(filtered_exercises) >= ex_count:
+                break
+                
+        # If we couldn't find enough exercises due to equipment, just return what we have
+        plans.append({
+            "type": bp["type"],
+            "rest_time": bp["rest_time"],
+            "exercises": filtered_exercises
+        })
         
     return plans
 

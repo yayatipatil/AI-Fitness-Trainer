@@ -229,6 +229,7 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="exercise-demo.js"></script>
     <script>
         lucide.createIcons();
         
@@ -246,7 +247,16 @@
             try {
                 document.getElementById('planner-content').style.display = 'block';
                 
-                const plans = await apiCall('/planner/week');
+                const [plans, allExercises] = await Promise.all([
+                    apiCall('/planner/week'),
+                    apiCall('/exercises').catch(() => [])
+                ]);
+                
+                const exercisesMap = {};
+                allExercises.forEach(ex => {
+                    exercisesMap[ex.name.toLowerCase()] = ex;
+                });
+                
                 const grid = document.getElementById('planner-grid');
                 grid.innerHTML = '';
                 
@@ -270,16 +280,30 @@
                         `;
                     } else {
                         dayPlans.forEach(p => {
-                            colHtml += `
-                                <div class="exercise-card">
-                                    <i data-lucide="x" class="delete-btn" onclick="deletePlan(${p.id})"></i>
-                                    <div class="exercise-title">${p.exercise_name}</div>
-                                    <div class="exercise-details">
-                                        ${p.target_sets} sets x ${p.target_reps} reps
-                                        ${p.target_duration_mins ? `<br>${p.target_duration_mins} mins` : ''}
+                            const exData = exercisesMap[p.exercise_name.toLowerCase()];
+                            if (exData) {
+                                colHtml += `
+                                    <div style="position: relative; margin-bottom: 10px;">
+                                        <i data-lucide="x" class="delete-btn" style="position: absolute; top: 10px; right: 10px; z-index: 10; cursor: pointer; color: var(--danger); background: rgba(0,0,0,0.5); border-radius: 50%; padding: 2px;" onclick="deletePlan(${p.id})"></i>
+                                        <div style="color: var(--primary); font-size: 0.8rem; margin-bottom: 5px; font-weight: bold;">
+                                            🎯 Target: ${p.target_sets} sets x ${p.target_reps} reps
+                                            ${p.target_duration_mins ? ` | ${p.target_duration_mins} mins` : ''}
+                                        </div>
+                                        ${renderExerciseCard(exData, true)}
                                     </div>
-                                </div>
-                            `;
+                                `;
+                            } else {
+                                colHtml += `
+                                    <div class="exercise-card">
+                                        <i data-lucide="x" class="delete-btn" onclick="deletePlan(${p.id})"></i>
+                                        <div class="exercise-title">${p.exercise_name}</div>
+                                        <div class="exercise-details">
+                                            ${p.target_sets} sets x ${p.target_reps} reps
+                                            ${p.target_duration_mins ? `<br>${p.target_duration_mins} mins` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }
                         });
                     }
                     

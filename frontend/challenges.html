@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenges - AI Fitness Trainer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <nav>
+        <a href="dashboard.html" class="logo">FitAI.</a>
+        <div class="links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="planner.html">Weekly Plan</a>
+            <a href="workouts.html">Workouts</a>
+            <a href="diet.html">Diet</a>
+            <a href="analytics.html">Analytics</a>
+            <a href="challenges.html" class="active">Challenges</a>
+            <a href="profile.html">Profile</a>
+            <a href="live_coach.html" class="btn btn-accent" style="padding: 0.5rem 1rem;">
+                <i data-lucide="video" style="width:16px;height:16px;"></i> Live Coach
+            </a>
+            <a href="#" onclick="logout()" style="margin-left:1rem;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container" id="challenges-content" style="display: none;">
+        <div style="margin-bottom: 2rem;">
+            <h1 class="gradient-text">Challenges & Badges</h1>
+            <p>Push yourself to earn badges and achieve new milestones.</p>
+        </div>
+
+        <h3 style="color: var(--accent); margin-bottom: 1rem;"><i data-lucide="award"></i> Active Challenges</h3>
+        <div class="dashboard-grid" id="challenges-grid">
+            <!-- Challenges rendered here -->
+        </div>
+
+        <h3 style="color: var(--accent); margin-top: 3rem; margin-bottom: 1rem;"><i data-lucide="shield-check"></i> Earned Badges</h3>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;" id="badges-container">
+            <!-- Badges rendered here -->
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        async function loadChallenges() {
+            try {
+                document.getElementById('challenges-content').style.display = 'block';
+                
+                const [challengesData, badgesData] = await Promise.all([
+                    apiCall('/challenges'),
+                    apiCall('/badges')
+                ]);
+                
+                const cGrid = document.getElementById('challenges-grid');
+                cGrid.innerHTML = challengesData.map(uc => {
+                    const c = uc.challenge;
+                    const percent = Math.min(100, Math.round((uc.progress / c.target_value) * 100));
+                    
+                    return `
+                    <div class="glass-panel" style="position: relative; overflow: hidden; ${uc.completed ? 'border-color: var(--accent);' : ''}">
+                        ${uc.completed ? `<div style="position: absolute; top: -15px; right: -15px; background: var(--accent); color: black; padding: 20px 30px 5px 10px; transform: rotate(45deg); font-size: 0.7rem; font-weight: bold;">DONE</div>` : ''}
+                        <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+                            ${c.badge_url ? `<img src="${c.badge_url}" style="width: 50px; height: 50px; filter: ${uc.completed ? 'none' : 'grayscale(100%) opacity(0.5)'};">` : `<i data-lucide="target" style="width: 40px; height: 40px; color: ${uc.completed ? 'var(--accent)' : 'var(--text-muted)'};"></i>`}
+                            <div>
+                                <h3 style="margin: 0; color: white;">${c.title}</h3>
+                                <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">${c.description}</p>
+                            </div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); border-radius: 10px; height: 10px; overflow: hidden; margin-bottom: 10px;">
+                            <div style="background: var(--accent); width: ${percent}%; height: 100%; transition: width 0.5s;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+                            <span>${uc.progress} / ${c.target_value} ${c.metric}</span>
+                            <span>${percent}%</span>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+                
+                const bContainer = document.getElementById('badges-container');
+                if (badgesData.length === 0) {
+                    bContainer.innerHTML = '<p style="color: var(--text-muted);">No badges earned yet. Complete challenges to earn badges!</p>';
+                } else {
+                    bContainer.innerHTML = badgesData.map(b => `
+                        <div class="glass-panel" style="display: flex; flex-direction: column; align-items: center; padding: 15px; width: 120px; text-align: center;">
+                            <img src="${b.icon_url}" style="width: 60px; height: 60px; margin-bottom: 10px;">
+                            <span style="font-weight: 600; font-size: 0.8rem; color: white;">${b.name}</span>
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">${new Date(b.earned_at).toLocaleDateString()}</span>
+                        </div>
+                    `).join('');
+                }
+                
+                lucide.createIcons();
+                
+            } catch (err) {
+                console.error("Error loading challenges:", err);
+            }
+        }
+
+        if (getToken()) {
+            loadChallenges();
+        }
+    </script>
+</body>
+</html>

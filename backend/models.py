@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 from pydantic import BaseModel
@@ -54,6 +54,69 @@ class WorkoutPlan(Base):
 
     user = relationship("User", back_populates="workout_plans")
 
+class Exercise(Base):
+    __tablename__ = "exercises"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    category = Column(String)
+    demo_url = Column(String, nullable=True)
+    primary_muscles = Column(String) # Stored as JSON string
+    secondary_muscles = Column(String) # Stored as JSON string
+    form_tips = Column(String) # Stored as JSON string
+    equipment = Column(String) # Stored as JSON string
+
+class UserEquipment(Base):
+    __tablename__ = "user_equipment"
+
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True, index=True)
+    equipment = Column(String) # Stored as JSON string
+
+    user = relationship("User")
+
+class Challenge(Base):
+    __tablename__ = "challenges"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    description = Column(String)
+    target_value = Column(Integer) # e.g. 10 workouts, 5000 calories
+    metric = Column(String) # "workouts", "calories", "streak"
+    badge_url = Column(String, nullable=True)
+
+class UserChallenge(Base):
+    __tablename__ = "user_challenges"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    challenge_id = Column(Integer, ForeignKey("challenges.id"))
+    progress = Column(Integer, default=0)
+    completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)
+
+class Badge(Base):
+    __tablename__ = "badges"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    name = Column(String)
+    icon_url = Column(String)
+    earned_at = Column(DateTime, default=datetime.utcnow)
+
+class SetLog(Base):
+    __tablename__ = "set_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    workout_log_id = Column(Integer, ForeignKey("workout_logs.id"), nullable=True)
+    exercise_name = Column(String, index=True)
+    weight_kg = Column(Float)
+    reps = Column(Integer)
+    date = Column(DateTime, default=datetime.utcnow)
+    
+    # 1RM formula: weight * (1 + reps/30)
+    def calculate_1rm(self):
+        return self.weight_kg * (1 + self.reps / 30.0)
 
 # --- Pydantic Schemas ---
 
@@ -125,5 +188,75 @@ class WorkoutPlanResponse(WorkoutPlanCreate):
     user_id: int
     created_at: datetime
 
+    class Config:
+        from_attributes = True
+
+class ExerciseCreate(BaseModel):
+    name: str
+    category: str
+    demo_url: Optional[str] = None
+    primary_muscles: str = "[]"
+    secondary_muscles: str = "[]"
+    form_tips: str = "[]"
+    equipment: str = "[]"
+
+class ExerciseResponse(ExerciseCreate):
+    id: int
+    
+    class Config:
+        from_attributes = True
+
+class UserEquipmentUpdate(BaseModel):
+    equipment: List[str]
+
+class UserEquipmentResponse(BaseModel):
+    user_id: int
+    equipment: List[str]
+
+    class Config:
+        from_attributes = True
+
+class ChallengeResponse(BaseModel):
+    id: int
+    title: str
+    description: str
+    target_value: int
+    metric: str
+    badge_url: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class UserChallengeResponse(BaseModel):
+    id: int
+    challenge: ChallengeResponse
+    progress: int
+    completed: bool
+    completed_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class BadgeResponse(BaseModel):
+    id: int
+    name: str
+    icon_url: str
+    earned_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class SetLogCreate(BaseModel):
+    workout_log_id: Optional[int] = None
+    exercise_name: str
+    weight_kg: float
+    reps: int
+
+class SetLogResponse(SetLogCreate):
+    id: int
+    user_id: int
+    date: datetime
+    estimated_1rm: float
+    
     class Config:
         from_attributes = True

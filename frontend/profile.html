@@ -82,6 +82,17 @@
                 </button>
             </form>
         </div>
+        
+        <div class="glass-panel" style="max-width: 600px; margin: 2rem auto; padding: 3rem; position: relative;">
+            <div id="toast" style="display: none; position: absolute; top: 10px; right: 20px; background: var(--accent); color: white; padding: 8px 15px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">Saved!</div>
+            <div style="margin-bottom: 1.5rem;">
+                <h3 class="gradient-text"><i data-lucide="dumbbell" style="vertical-align: middle;"></i> My Equipment</h3>
+                <p>Select what you have available. Your workouts will adapt automatically.</p>
+            </div>
+            <div id="equipment-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <!-- Filled via JS -->
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
@@ -114,7 +125,15 @@
             };
             
             try {
-                await apiCall('/auth/me', 'POST', payload);
+                // Notice the backend schema for User is flat, so mapping to exact DB keys:
+                await apiCall('/auth/me', 'POST', {
+                    age: parseInt(document.getElementById('p-age').value),
+                    height_cm: parseFloat(document.getElementById('p-height').value),
+                    weight_kg: parseFloat(document.getElementById('p-weight').value),
+                    gender: document.getElementById('p-gender').value,
+                    fitness_goal: document.getElementById('p-goal').value,
+                    experience_level: document.getElementById('p-experience').value
+                });
                 alert('Profile saved successfully!');
                 window.location.href = 'dashboard.html';
             } catch (err) {
@@ -122,8 +141,48 @@
             }
         });
 
+        // Equipment Logic
+        const ALL_EQUIPMENT = ["bodyweight", "resistance bands", "dumbbells", "barbell", "bench", "pull-up bar", "cable machine", "kettlebell", "full gym"];
+        let userEqSet = new Set();
+        let eqTimeout = null;
+        
+        async function loadEquipment() {
+            try {
+                const data = await apiCall('/user/equipment');
+                userEqSet = new Set(data.equipment || []);
+                renderEquipmentList();
+            } catch(e) { console.error(e); }
+        }
+        
+        function renderEquipmentList() {
+            const container = document.getElementById('equipment-list');
+            container.innerHTML = ALL_EQUIPMENT.map(eq => `
+                <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;">
+                    <input type="checkbox" value="${eq}" ${userEqSet.has(eq) ? 'checked' : ''} onchange="toggleEquipment('${eq}', this.checked)" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                    <span style="text-transform: capitalize; color: var(--text-main); font-size: 0.95rem;">${eq}</span>
+                </label>
+            `).join('');
+        }
+        
+        function toggleEquipment(eq, isChecked) {
+            if(isChecked) userEqSet.add(eq);
+            else userEqSet.delete(eq);
+            
+            // Autosave with debounce
+            if(eqTimeout) clearTimeout(eqTimeout);
+            eqTimeout = setTimeout(async () => {
+                try {
+                    await apiCall('/user/equipment', 'PUT', { equipment: Array.from(userEqSet) });
+                    const toast = document.getElementById('toast');
+                    toast.style.display = 'block';
+                    setTimeout(() => { toast.style.display = 'none'; }, 2000);
+                } catch(e) { console.error(e); }
+            }, 500);
+        }
+
         if (getToken()) {
             loadProfileData();
+            loadEquipment();
         }
     </script>
 </body>
