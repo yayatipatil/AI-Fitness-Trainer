@@ -156,12 +156,15 @@
         }
 
         async function loadRecommendations() {
+            showLoadingSpinner('dashboard-content');
             try {
                 const data = await apiCall('/recommend-workout');
                 document.getElementById('diet-calories').textContent = data.diet.daily_calories;
                 document.getElementById('diet-protein').textContent = data.diet.protein_grams;
             } catch (err) {
                 console.error(err);
+            } finally {
+                hideLoadingSpinner('dashboard-content');
             }
         }
 

@@ -266,23 +266,23 @@ function startCamera() {
         isTracking = true;
         statusTextEl.textContent = "Status: Tracking Active";
     }).catch(err => {
-        alert("Could not start camera: " + err);
+        showToast("Could not start camera: " + err, 'error');
         document.getElementById('btn-start').style.display = "block";
         document.getElementById('btn-finish').style.display = "none";
     });
 }
 
 async function finishWorkout() {
-    if (repCount === 0) {
-        alert("You haven't completed any tracked movement yet!");
+    const exercise = exerciseTypeEl.value;
+    if (repCount === 0 && (exercise !== 'plank' || plankTime === 0)) {
+        showToast("You haven't completed any tracked movement yet!", 'warning');
         return;
-    }
+    } 
     
     if (camera) {
         camera.stop();
     }
     
-    const exercise = exerciseTypeEl.value;
     const calories = repCount * 0.5;
     
     try {
@@ -298,10 +298,10 @@ async function finishWorkout() {
             reps: repCount
         }));
 
-        alert(`Workout Logged! ${repCount} ${exercise === 'plank' ? 'seconds' : 'reps'} successfully tracked and saved to your profile.`);
+        showToast(`Workout Logged! ${repCount} ${exercise === 'plank' ? 'seconds' : 'reps'} successfully tracked and saved to your profile.`);
         window.location.href = 'dashboard.html';
         
     } catch (err) {
-        alert('Error logging workout: ' + err.message);
+        showToast('Error logging workout: ' + err.message, 'error');
     }
 }

@@ -77,7 +77,7 @@ window.logSet = async function(exerciseName, weightInputId, repsInputId, btnElem
     const reps = parseInt(document.getElementById(repsInputId).value);
     
     if (!weight || !reps) {
-        alert("Please enter both weight and reps.");
+        showToast("Please enter both weight and reps.", 'warning');
         return;
     }
     
@@ -106,7 +106,7 @@ window.logSet = async function(exerciseName, weightInputId, repsInputId, btnElem
         }, 1500);
         
     } catch (e) {
-        alert("Error logging set: " + e.message);
+        showToast("Error logging set: " + e.message, 'error');
         btnElement.innerHTML = `<i data-lucide="x" style="width: 14px; height: 14px; color: #ef4444;"></i>`;
         lucide.createIcons({root: btnElement});
     }

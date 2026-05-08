@@ -129,7 +129,7 @@
                 if (timeRemaining <= 0) {
                     clearInterval(timerInterval);
                     display.textContent = "00:00";
-                    alert("Workout complete! Great job!");
+                    showToast("Workout complete! Great job!");
                 }
             }, 1000);
         }
@@ -140,6 +140,7 @@
         }
         
         async function loadWorkouts() {
+            showLoadingSpinner('workouts-container');
             try {
                 // Fetch workouts and all exercises
                 const [data, allExercises] = await Promise.all([
@@ -219,9 +220,11 @@
             } catch (err) {
                 console.error(err);
                 if(err.message === "Profile not found" || err.message === "Profile required for recommendations") {
-                    alert("Please complete your profile first.");
+                    showToast("Please complete your profile first.", "error");
                     window.location.href = 'profile.html';
                 }
+            } finally {
+                hideLoadingSpinner('workouts-container');
             }
         }
 
@@ -237,10 +240,10 @@
                     difficulty_feedback: difficulty,
                     calories_burned: calories
                 });
-                alert('Workout logged! AI has adapted to your feedback.');
-                window.location.href = 'dashboard.html';
+                showToast('Workout logged! AI has adapted to your feedback.');
+                setTimeout(() => window.location.href = 'dashboard.html', 1500);
             } catch (err) {
-                alert('Error logging workout: ' + err.message);
+                showToast('Error logging workout: ' + err.message, 'error');
             }
         });
 

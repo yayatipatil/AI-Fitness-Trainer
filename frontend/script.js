@@ -113,4 +113,118 @@ function renderChart(dates, calories) {
 }
 
 // Run auth check on load
+// --- Global UX Utilities ---
+
+function showToast(message, type = "success") {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.position = 'fixed';
+        container.style.top = '20px';
+        container.style.right = '20px';
+        container.style.zIndex = '9999';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '10px';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    
+    // Set colors based on type
+    const bgColor = type === "error" ? "rgba(239, 68, 68, 0.9)" : 
+                   type === "warning" ? "rgba(245, 158, 11, 0.9)" : 
+                   "rgba(16, 185, 129, 0.9)";
+                   
+    const iconName = type === "error" ? "x-circle" : 
+                    type === "warning" ? "alert-triangle" : 
+                    "check-circle";
+
+    toast.style.background = bgColor;
+    toast.style.color = "white";
+    toast.style.padding = "12px 20px";
+    toast.style.borderRadius = "8px";
+    toast.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
+    toast.style.display = "flex";
+    toast.style.alignItems = "center";
+    toast.style.gap = "10px";
+    toast.style.minWidth = "250px";
+    toast.style.transform = "translateX(120%)";
+    toast.style.opacity = "0";
+    toast.style.transition = "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+    
+    toast.innerHTML = `
+        <i data-lucide="${iconName}" style="width: 20px; height: 20px;"></i>
+        <span style="font-weight: 600; font-size: 0.95rem;">${message}</span>
+    `;
+
+    container.appendChild(toast);
+    if (window.lucide) {
+        lucide.createIcons({ root: toast });
+    }
+
+    // Trigger animation in
+    setTimeout(() => {
+        toast.style.transform = "translateX(0)";
+        toast.style.opacity = "1";
+    }, 10);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        toast.style.transform = "translateX(120%)";
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function showLoadingSpinner(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    // Check if already loading
+    if (container.querySelector('.loading-overlay')) return;
+    
+    // Make container relative if static
+    const computedStyle = window.getComputedStyle(container);
+    if (computedStyle.position === 'static') {
+        container.style.position = 'relative';
+    }
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'loading-overlay';
+    overlay.style.position = 'absolute';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.background = 'rgba(13, 22, 39, 0.7)';
+    overlay.style.backdropFilter = 'blur(4px)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '50';
+    overlay.style.borderRadius = computedStyle.borderRadius || 'inherit';
+    
+    overlay.innerHTML = `<i data-lucide="loader-2" class="spin-icon" style="width: 32px; height: 32px; color: var(--primary);"></i>`;
+    
+    container.appendChild(overlay);
+    if (window.lucide) {
+        lucide.createIcons({ root: overlay });
+    }
+}
+
+function hideLoadingSpinner(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const overlay = container.querySelector('.loading-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.3s';
+        setTimeout(() => overlay.remove(), 300);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', checkAuth);

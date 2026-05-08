@@ -134,10 +134,10 @@
                     fitness_goal: document.getElementById('p-goal').value,
                     experience_level: document.getElementById('p-experience').value
                 });
-                alert('Profile saved successfully!');
-                window.location.href = 'dashboard.html';
+                showToast('Profile saved successfully!');
+                setTimeout(() => window.location.href = 'dashboard.html', 1000);
             } catch (err) {
-                alert('Error saving profile: ' + err.message);
+                showToast('Error saving profile: ' + err.message, 'error');
             }
         });
 

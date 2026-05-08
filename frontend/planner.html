@@ -357,7 +357,7 @@
             const reps = parseInt(document.getElementById('plan-reps').value);
             const durationStr = document.getElementById('plan-duration').value;
             
-            if (!exercise) return alert('Exercise name is required');
+            if (!exercise) return showToast('Exercise name is required', 'warning');
             
             try {
                 await apiCall('/planner/day', 'POST', {
@@ -370,7 +370,7 @@
                 closeModal();
                 loadPlanner();
             } catch (err) {
-                alert('Error adding plan: ' + err.message);
+                showToast('Error adding plan: ' + err.message, 'error');
             }
         }
         
@@ -380,7 +380,7 @@
                 await apiCall(`/planner/day/${id}`, 'DELETE');
                 loadPlanner();
             } catch (err) {
-                alert('Error deleting plan: ' + err.message);
+                showToast('Error deleting plan: ' + err.message, 'error');
             }
         }
     </script>
