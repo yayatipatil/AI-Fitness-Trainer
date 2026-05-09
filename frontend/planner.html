@@ -259,7 +259,7 @@
                 });
                 
                 const grid = document.getElementById('planner-grid');
-                grid.innerHTML = '';
+                let allColHtml = '';
                 
                 for (let i = 0; i < 7; i++) {
                     const dayPlans = plans.filter(p => p.day_of_week === i);
@@ -309,8 +309,10 @@
                     }
                     
                     colHtml += `</div>`;
-                    grid.innerHTML += colHtml;
+                    allColHtml += colHtml;
                 }
+                
+                grid.innerHTML = allColHtml;
                 
                 lucide.createIcons();
                 loadSuggestions();

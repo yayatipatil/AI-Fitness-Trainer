@@ -65,7 +65,7 @@ def get_me(current_user: models.User = Depends(auth.get_current_user)):
 
 @app.post("/auth/me", response_model=models.UserResponse)
 def update_me(user_update: models.UserUpdate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
-    update_data = user_update.dict(exclude_unset=True)
+    update_data = user_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(current_user, key, value)
     db.commit()
@@ -178,7 +178,7 @@ def log_live_workout(log: models.WorkoutLogCreate, current_user: models.User = D
     db.refresh(new_log)
     return new_log
 
-@app.get("/challenges")
+@app.get("/challenges", response_model=List[models.UserChallengeResponse])
 def get_challenges(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     all_challenges = db.query(models.Challenge).all()
     user_challenges = db.query(models.UserChallenge).filter(models.UserChallenge.user_id == current_user.id).all()

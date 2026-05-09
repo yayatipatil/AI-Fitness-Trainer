@@ -103,12 +103,12 @@
         async function loadProfileData() {
             try {
                 const profile = await apiCall('/auth/me');
-                document.getElementById('p-age').value = profile.age;
-                document.getElementById('p-height').value = profile.height;
-                document.getElementById('p-weight').value = profile.weight;
-                document.getElementById('p-gender').value = profile.gender;
-                document.getElementById('p-goal').value = profile.goal;
-                document.getElementById('p-experience').value = profile.experience_level;
+                document.getElementById('p-age').value = profile.age || '';
+                document.getElementById('p-height').value = profile.height_cm || '';
+                document.getElementById('p-weight').value = profile.weight_kg || '';
+                document.getElementById('p-gender').value = profile.gender || 'Male';
+                document.getElementById('p-goal').value = profile.fitness_goal || 'Maintenance';
+                document.getElementById('p-experience').value = profile.experience_level || 'Beginner';
             } catch (err) {
                 console.log("No profile found, please fill out the form.");
             }

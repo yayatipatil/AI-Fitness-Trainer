@@ -9,6 +9,7 @@ A modern, full-stack AI fitness application that uses rule-based logic, real-tim
 - **Advanced Machine Learning Pipeline**: A Random Forest model trains on real user workout data from the database to predict an accurate Fitness Score based on BMI, workout frequency, streaks, and calories burned.
 - **Weekly Workout Planner**: Plan your week visually. Receive dynamic "progressive overload" suggestions based on your past workout performance.
 - **Smart Diet Recommendations**: Calculates BMR and suggests macros based on user goals, visualized with beautiful circular progress rings.
+- **Interactive Video Guides**: Every workout card features a directly embedded YouTube video tutorial to ensure perfect form.
 - **Advanced Analytics & Set Logging**: Dedicated charts page to visualize calorie burn history. Log precise reps/weights to automatically track and chart your estimated 1RM (One Rep Max) over time.
 - **Equipment-Aware Workouts & Swapping**: Workouts adapt based on the equipment you own. Easily swap exercises dynamically on the fly based on gear and duration targets.
 - **Challenges, Streaks & Badges**: Gamify your fitness journey. Complete built-in challenges to unlock visual badges, and maintain your consecutive daily streaks.

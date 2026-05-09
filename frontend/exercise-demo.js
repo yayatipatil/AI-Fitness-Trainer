@@ -122,7 +122,38 @@ function renderExerciseCard(exercise, enableSwap = false) {
         'Full Body': 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=400&q=80'
     };
     
-    const imgUrl = exercise.demo_url || categoryImages[exercise.category] || categoryImages['Full Body'];
+    const youtubeVideos = {
+        'Squats': 'https://www.youtube.com/embed/gcNh17Ckjgg',
+        'Push-ups': 'https://www.youtube.com/embed/IODxDxX7oi4',
+        'Pull-ups': 'https://www.youtube.com/embed/eGo4IYPNUKk',
+        'Deadlifts': 'https://www.youtube.com/embed/op9kVnSso6Q',
+        'Bench Press': 'https://www.youtube.com/embed/gRVjAtPip0Y',
+        'Lunges': 'https://www.youtube.com/embed/QOVaHwm-Q6U',
+        'Overhead Press': 'https://www.youtube.com/embed/QAQ64hK4Xxs',
+        'Bicep Curls': 'https://www.youtube.com/embed/ykJmrZ5v0Oo',
+        'Tricep Dips': 'https://www.youtube.com/embed/0326dy_-CzM',
+        'Plank': 'https://www.youtube.com/embed/pSHjTRCQxIw',
+        'Russian Twists': 'https://www.youtube.com/embed/wkD8rjkodUI',
+        'Calf Raises': 'https://www.youtube.com/embed/-M4-G8p8fmc',
+        'Leg Press': 'https://www.youtube.com/embed/IZxyjW7OSvc',
+        'Lat Pulldown': 'https://www.youtube.com/embed/CAwf7n6Luuc',
+        'Cable Crossovers': 'https://www.youtube.com/embed/taI4XduLpTk',
+        'Face Pulls': 'https://www.youtube.com/embed/rep-qVOkqgk',
+        'Kettlebell Swings': 'https://www.youtube.com/embed/YSxHifyI6s8',
+        'Burpees': 'https://www.youtube.com/embed/TU8QYVW0gDU',
+        'Mountain Climbers': 'https://www.youtube.com/embed/nmwgirgXLYM',
+        'Glute Bridges': 'https://www.youtube.com/embed/OUgsJ8-Vi0E'
+    };
+    
+    const embedUrl = exercise.demo_url || youtubeVideos[exercise.name];
+    let mediaHtml = '';
+    
+    if (embedUrl && embedUrl.includes('youtube.com/embed')) {
+        mediaHtml = `<iframe width="100%" height="100%" src="${embedUrl}" title="${exercise.name} Tutorial" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position: absolute; top: 0; left: 0; border: none; border-radius: 14px 14px 0 0;"></iframe>`;
+    } else {
+        const imgUrl = embedUrl || categoryImages[exercise.category] || categoryImages['Full Body'];
+        mediaHtml = `<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 14px 14px 0 0;" alt="${exercise.name}">`;
+    }
     
     let swapBtnHtml = enableSwap ? `
         <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;" onclick="swapExercise('${exercise.name}', this)">
@@ -132,9 +163,9 @@ function renderExerciseCard(exercise, enableSwap = false) {
 
     return `
     <div class="exercise-card glass-panel" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;" id="card-${exercise.name.replace(/\s+/g, '-')}">
-        <div style="position: relative; height: 150px;">
-            <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="${exercise.name}">
-            <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px;">
+        <div style="position: relative; height: 200px; z-index: 1;">
+            ${mediaHtml}
+            <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10; pointer-events: none;">
                 <span class="badge" style="background: rgba(0,0,0,0.6); color: white;">${exercise.category}</span>
             </div>
         </div>

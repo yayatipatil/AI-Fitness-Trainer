@@ -188,9 +188,14 @@
                 </div>
 
                 <div class="recipes-header">
-                    <i data-lucide="utensils-crossed" style="width:18px;height:18px;"></i>
-                    Recommended Recipes <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 4px; font-weight: 400;">Powered by Edamam</span>
+                    <i data-lucide="calendar" style="width:18px;height:18px;"></i>
+                    Weekly Meal Plan
                 </div>
+                
+                <div class="days-tabs" id="days-tabs" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px;">
+                    <!-- Tabs injected here -->
+                </div>
+
                 <div id="recipe-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.25rem;">
                     <!-- Recipes injected here -->
                 </div>
@@ -222,33 +227,47 @@
                 document.getElementById('diet-suggestion').textContent =
                     diet.suggestion || 'Focus on hitting your daily targets consistently. Prioritise whole foods, lean protein, and stay hydrated.';
 
-                // Recipes
-                const recipeGrid = document.getElementById('recipe-grid');
-                recipeGrid.innerHTML = '';
-                if (diet.recipes && diet.recipes.length > 0) {
-                    diet.recipes.forEach(recipe => {
-                        recipeGrid.innerHTML += `
-                            <a href="${recipe.url}" target="_blank" rel="noopener" class="recipe-card">
-                                <img src="${recipe.image}" alt="${recipe.title}" class="recipe-image"
-                                     onerror="this.style.background='rgba(59,130,246,0.1)'; this.removeAttribute('src');">
-                                <div class="recipe-body">
-                                    <h4 title="${recipe.title}">${recipe.title}</h4>
-                                    <div class="recipe-cal-pill">
-                                        <i data-lucide="flame" style="width:12px;height:12px;"></i>
-                                        ${recipe.calories} kcal
-                                    </div>
-                                    <div class="recipe-view-btn">View Recipe →</div>
-                                </div>
-                            </a>`;
-                    });
-                    lucide.createIcons();
-                } else {
-                    recipeGrid.innerHTML = `
-                        <div style="grid-column:1/-1; color:var(--text-muted); text-align:center; padding: 2rem;">
-                            <i data-lucide="utensils-crossed" style="width:32px;height:32px; margin-bottom:0.5rem; display:block; margin-left:auto; margin-right:auto;"></i>
-                            No recipes found. Check your API keys or try again later.
-                        </div>`;
-                    lucide.createIcons();
+                // Weekly Plan
+                const plan = diet.weekly_plan;
+                if (plan) {
+                    window.weeklyPlanData = plan; // save globally for tab switching
+                    const daysTabs = document.getElementById('days-tabs');
+                    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+                    
+                    daysTabs.innerHTML = days.map(day => 
+                        `<button class="tab-btn" id="tab-${day}" onclick="renderMealsForDay('${day}')">${day}</button>`
+                    ).join('');
+                    
+                    // Style the tab buttons dynamically
+                    if (!document.getElementById('tab-styles')) {
+                        const style = document.createElement('style');
+                        style.id = 'tab-styles';
+                        style.textContent = `
+                            .tab-btn {
+                                background: rgba(255,255,255,0.05);
+                                border: 1px solid var(--border-light);
+                                color: var(--text-muted);
+                                padding: 8px 16px;
+                                border-radius: 20px;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                                font-weight: 600;
+                                white-space: nowrap;
+                            }
+                            .tab-btn:hover {
+                                background: rgba(255,255,255,0.1);
+                                color: white;
+                            }
+                            .tab-btn.active {
+                                background: var(--accent);
+                                color: black;
+                                border-color: var(--accent);
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    }
+                    
+                    renderMealsForDay("Monday"); // default
                 }
 
             } catch (err) {
@@ -261,6 +280,38 @@
             } finally {
                 hideLoadingSpinner('diet-content');
             }
+        }
+
+        function renderMealsForDay(day) {
+            // Update active tab
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + day).classList.add('active');
+            
+            const meals = window.weeklyPlanData[day] || [];
+            const recipeGrid = document.getElementById('recipe-grid');
+            
+            if(meals.length === 0) {
+                recipeGrid.innerHTML = '<div style="color:var(--text-muted);">No meals planned.</div>';
+                return;
+            }
+            
+            recipeGrid.innerHTML = meals.map(meal => `
+                <a href="${meal.url}" target="_blank" rel="noopener" class="recipe-card">
+                    <img src="${meal.image}" alt="${meal.title}" class="recipe-image"
+                         onerror="this.style.background='rgba(59,130,246,0.1)'; this.removeAttribute('src');">
+                    <div class="recipe-body">
+                        <div style="font-size: 0.7rem; color: var(--accent); text-transform: uppercase; font-weight: 800; margin-bottom: 4px;">${meal.type}</div>
+                        <h4 title="${meal.title}">${meal.title}</h4>
+                        <div class="recipe-cal-pill">
+                            <i data-lucide="flame" style="width:12px;height:12px;"></i>
+                            ${meal.calories} kcal
+                        </div>
+                        <div class="recipe-view-btn">View Recipe →</div>
+                    </div>
+                </a>
+            `).join('');
+            
+            lucide.createIcons();
         }
 
         if (getToken()) loadDiet();
