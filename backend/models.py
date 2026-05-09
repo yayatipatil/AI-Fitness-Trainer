@@ -136,6 +136,14 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
 
+class AccountUpdate(BaseModel):
+    username: str
+    email: str
+
+class PasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str
+
 class UserUpdate(BaseModel):
     age: Optional[int] = None
     height_cm: Optional[float] = None

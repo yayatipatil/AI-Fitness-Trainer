@@ -72,6 +72,53 @@ def update_me(user_update: models.UserUpdate, current_user: models.User = Depend
     db.refresh(current_user)
     return current_user
 
+@app.put("/auth/account", response_model=models.UserResponse)
+def update_account(account_update: models.AccountUpdate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    # Check if username exists and is not the current user
+    if account_update.username != current_user.username:
+        db_user = db.query(models.User).filter(models.User.username == account_update.username).first()
+        if db_user:
+            raise HTTPException(status_code=400, detail="Username already taken")
+    
+    # Check if email exists and is not the current user
+    if account_update.email != current_user.email:
+        db_email = db.query(models.User).filter(models.User.email == account_update.email).first()
+        if db_email:
+            raise HTTPException(status_code=400, detail="Email already taken")
+            
+    current_user.username = account_update.username
+    current_user.email = account_update.email
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+@app.put("/auth/password")
+def update_password(password_update: models.PasswordUpdate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    if not security.verify_password(password_update.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+        
+    current_user.hashed_password = security.hash_password(password_update.new_password)
+    db.commit()
+    return {"detail": "Password updated successfully"}
+
+@app.delete("/auth/account")
+def delete_account(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    user_id = current_user.id
+    
+    # Hard Delete: Wipe all associated records manually to ensure no foreign key constraint failures
+    db.query(models.WorkoutLog).filter(models.WorkoutLog.user_id == user_id).delete()
+    db.query(models.WorkoutPlan).filter(models.WorkoutPlan.user_id == user_id).delete()
+    db.query(models.UserEquipment).filter(models.UserEquipment.user_id == user_id).delete()
+    db.query(models.SetLog).filter(models.SetLog.user_id == user_id).delete()
+    db.query(models.UserChallenge).filter(models.UserChallenge.user_id == user_id).delete()
+    db.query(models.Badge).filter(models.Badge.user_id == user_id).delete()
+    
+    # Finally, delete the user
+    db.delete(current_user)
+    db.commit()
+    
+    return {"detail": "Account deleted successfully"}
+
 @app.get("/recommend-workout")
 def get_workout(duration_minutes: int = 30, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     if not current_user.fitness_goal or not current_user.experience_level:

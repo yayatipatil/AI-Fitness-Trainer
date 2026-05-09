@@ -94,6 +94,50 @@
                 <!-- Filled via JS -->
             </div>
         </div>
+        
+        <div class="glass-panel" style="max-width: 600px; margin: 2rem auto; padding: 3rem;">
+            <div style="margin-bottom: 1.5rem;">
+                <h3 class="gradient-text"><i data-lucide="settings" style="vertical-align: middle;"></i> Account Settings</h3>
+                <p>Update your login credentials and account details.</p>
+            </div>
+            
+            <form id="account-form" style="margin-bottom: 2rem;">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="acc-username" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="acc-email" required>
+                </div>
+                <button type="submit" class="btn btn-outline" style="width: 100%;">Update Details</button>
+            </form>
+            
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 2rem 0;">
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4>Change Password</h4>
+            </div>
+            <form id="password-form">
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="pw-current" required>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="pw-new" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-outline" style="width: 100%;">Change Password</button>
+            </form>
+        </div>
+        
+        <div class="glass-panel" style="max-width: 600px; margin: 2rem auto; padding: 3rem; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05);">
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="color: #ef4444;"><i data-lucide="alert-triangle" style="vertical-align: middle;"></i> Danger Zone</h3>
+                <p style="color: var(--text-muted);">Permanently delete your account and all associated data. This action cannot be undone.</p>
+            </div>
+            <button id="btn-delete-account" class="btn btn-outline" style="width: 100%; border-color: #ef4444; color: #ef4444;">Delete My Account</button>
+        </div>
     </div>
 
     <script src="script.js"></script>
@@ -109,6 +153,10 @@
                 document.getElementById('p-gender').value = profile.gender || 'Male';
                 document.getElementById('p-goal').value = profile.fitness_goal || 'Maintenance';
                 document.getElementById('p-experience').value = profile.experience_level || 'Beginner';
+                
+                // Account details
+                document.getElementById('acc-username').value = profile.username || '';
+                document.getElementById('acc-email').value = profile.email || '';
             } catch (err) {
                 console.log("No profile found, please fill out the form.");
             }
@@ -180,6 +228,49 @@
                 } catch(e) { console.error(e); }
             }, 500);
         }
+
+        // Account Details Update
+        document.getElementById('account-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('acc-username').value;
+            const email = document.getElementById('acc-email').value;
+            
+            try {
+                await apiCall('/auth/account', 'PUT', { username, email });
+                showToast('Account details updated successfully!');
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        });
+
+        // Password Change
+        document.getElementById('password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const current_password = document.getElementById('pw-current').value;
+            const new_password = document.getElementById('pw-new').value;
+            
+            try {
+                await apiCall('/auth/password', 'PUT', { current_password, new_password });
+                showToast('Password changed successfully!');
+                document.getElementById('password-form').reset();
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        });
+
+        // Account Deletion
+        document.getElementById('btn-delete-account').addEventListener('click', async () => {
+            if (confirm("Are you absolutely sure you want to permanently delete your account? All your data will be wiped immediately.")) {
+                try {
+                    await apiCall('/auth/account', 'DELETE');
+                    alert("Your account has been deleted. We're sorry to see you go.");
+                    localStorage.removeItem('token');
+                    window.location.href = 'index.html';
+                } catch (err) {
+                    showToast('Error deleting account: ' + err.message, 'error');
+                }
+            }
+        });
 
         if (getToken()) {
             loadProfileData();
