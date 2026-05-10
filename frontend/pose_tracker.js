@@ -15,6 +15,50 @@ let repCount = 0;
 let stage = "up"; // "up" or "down"
 let isTracking = false;
 
+// Custom TFJS KNN Model
+let classifier = null;
+if (typeof knnClassifier !== 'undefined') {
+    classifier = knnClassifier.create();
+}
+let currentLandmarksTensor = null;
+let exampleCounts = { up: 0, down: 0, incorrect: 0 };
+const trainingStatusEl = document.getElementById('training-status');
+const useCustomModelCheckbox = document.getElementById('use-custom-model');
+
+function updateTrainingStatus() {
+    if(!trainingStatusEl) return;
+    trainingStatusEl.textContent = `Trained: UP(${exampleCounts.up}) | DOWN(${exampleCounts.down}) | INCORRECT(${exampleCounts.incorrect})`;
+}
+
+function addExample(classId) {
+    if (!classifier) {
+        showToast("KNN Classifier not loaded.", "error");
+        return;
+    }
+    if (!currentLandmarksTensor) {
+        showToast("No pose detected right now. Stand in frame.", "warning");
+        return;
+    }
+    
+    // Add example to classifier
+    classifier.addExample(currentLandmarksTensor, classId);
+    exampleCounts[classId]++;
+    updateTrainingStatus();
+    showToast(`Added example for ${classId.toUpperCase()}`, "success");
+}
+
+function processLandmarksToTensor(landmarks) {
+    // Flatten landmarks to a 1D array of length 33 * 3 = 99
+    // We'll just use x and y for 2D, or x,y,z for 3D. Let's use x, y, z.
+    const flatArray = [];
+    for (let i = 0; i < landmarks.length; i++) {
+        flatArray.push(landmarks[i].x);
+        flatArray.push(landmarks[i].y);
+        flatArray.push(landmarks[i].z);
+    }
+    return tf.tensor1d(flatArray);
+}
+
 // Plank specifics
 let plankStartTime = null;
 let plankTime = 0;
@@ -228,6 +272,44 @@ function onResults(results) {
                 }
             }
         }
+        
+        // --- CUSTOM AI MODEL OVERRIDE ---
+        if (useCustomModelCheckbox && useCustomModelCheckbox.checked && classifier && classifier.getNumClasses() > 0) {
+            // Predict using Custom Model instead
+            try {
+                classifier.predictClass(currentLandmarksTensor).then(result => {
+                    const predictedClass = result.label;
+                    const confidence = result.confidences[predictedClass];
+                    
+                    if (confidence > 0.6) { // Only trust predictions > 60%
+                        if (predictedClass === 'incorrect') {
+                            showFeedback("WARNING: Incorrect Form!", "red");
+                            statusTextEl.textContent = `Status: Bad Form (${Math.round(confidence*100)}%)`;
+                        } else if (predictedClass === 'up') {
+                            if (stage === 'down') {
+                                repCount++;
+                                repCountEl.textContent = repCount;
+                                showFeedback("Good Rep!");
+                            }
+                            stage = "up";
+                            statusTextEl.textContent = `Status: Standing (${Math.round(confidence*100)}%)`;
+                        } else if (predictedClass === 'down') {
+                            stage = "down";
+                            statusTextEl.textContent = `Status: Down (${Math.round(confidence*100)}%)`;
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Prediction error", err);
+            }
+        }
+        // --- END CUSTOM AI MODEL OVERRIDE ---
+        
+        // Store current tensor for training if user clicks capture
+        if (currentLandmarksTensor) {
+            currentLandmarksTensor.dispose(); // dispose old tensor to prevent memory leak
+        }
+        currentLandmarksTensor = processLandmarksToTensor(landmarks);
     }
     
     canvasCtx.restore();

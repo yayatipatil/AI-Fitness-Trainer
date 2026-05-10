@@ -118,6 +118,20 @@ class SetLog(Base):
     def calculate_1rm(self):
         return self.weight_kg * (1 + self.reps / 30.0)
 
+class DietLog(Base):
+    __tablename__ = "diet_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    date = Column(DateTime, default=datetime.utcnow)
+    food_name = Column(String)
+    calories = Column(Float, default=0.0)
+    protein = Column(Float, default=0.0)
+    carbs = Column(Float, default=0.0)
+    fat = Column(Float, default=0.0)
+    
+    user = relationship("User")
+
 # --- Pydantic Schemas ---
 
 class UserCreate(BaseModel):
@@ -266,5 +280,20 @@ class SetLogResponse(SetLogCreate):
     date: datetime
     estimated_1rm: float
     
+    class Config:
+        from_attributes = True
+
+class DietLogCreate(BaseModel):
+    food_name: str
+    calories: float
+    protein: float
+    carbs: float
+    fat: float
+
+class DietLogResponse(DietLogCreate):
+    id: int
+    user_id: int
+    date: datetime
+
     class Config:
         from_attributes = True

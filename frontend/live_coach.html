@@ -13,6 +13,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     
+    <!-- TensorFlow.js and KNN Classifier -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier"></script>
+    
     <style>
         .video-container {
             position: relative;
@@ -150,6 +154,24 @@
                     <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--accent); transition: .4s; border-radius: 34px;"></span>
                     <span style="position: absolute; content: ''; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; transform: translateX(24px);"></span>
                 </label>
+            </div>
+            
+            <!-- Custom AI Model Training UI -->
+            <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px dashed var(--accent);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <strong style="color: var(--accent);"><i data-lucide="brain-circuit" style="width:16px;height:16px; display:inline-block; margin-right:4px;"></i> Train Custom Pose Model</strong>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="use-custom-model" style="accent-color: var(--accent);">
+                        <span style="font-size: 0.9rem;">Use Custom Model</span>
+                    </label>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Capture your own form to replace standard angles. Stand in the position and click capture.</p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn" style="background: var(--primary); color: white; padding: 5px 10px; font-size: 0.8rem;" onclick="addExample('up')">Capture UP (Standing)</button>
+                    <button class="btn" style="background: var(--purple-accent); color: white; padding: 5px 10px; font-size: 0.8rem;" onclick="addExample('down')">Capture DOWN (Squat/Lunge)</button>
+                    <button class="btn" style="background: #dc2626; color: white; padding: 5px 10px; font-size: 0.8rem;" onclick="addExample('incorrect')">Capture INCORRECT</button>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);" id="training-status">Model untrained.</div>
             </div>
         </div>
 

@@ -1,8 +1,15 @@
 import os
 import requests
+import json
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
+
+try:
+    import google.generativeai as genai
+    HAS_GENAI = True
+except ImportError:
+    HAS_GENAI = False
 
 def calculate_bmi(weight: float, height_cm: float) -> float:
     height_m = height_cm / 100
@@ -150,6 +157,47 @@ def get_workout_recommendation(goal: str, experience_level: str, intensity_modif
     # Apply adaptive intensity
     adjusted_sets = max(1, int(base_sets * intensity_modifier))
     adjusted_reps = max(5, int(base_reps * intensity_modifier))
+    
+    # Dynamic AI Workout Generation using Gemini
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if HAS_GENAI and gemini_key:
+        try:
+            genai.configure(api_key=gemini_key)
+            model = genai.GenerativeModel('gemini-flash-latest')
+            
+            prompt = f"""
+            You are an expert AI Fitness Trainer.
+            Generate a personalized workout plan for a user with the following profile:
+            - Goal: {goal}
+            - Experience Level: {experience_level}
+            - Intensity Modifier: {intensity_modifier} (1.0 is normal, higher is harder)
+            - Duration: {duration_minutes} minutes
+            - Available Equipment: {user_equipment if user_equipment else 'Bodyweight only'}
+            
+            Return ONLY a JSON array containing 3 workout routines. 
+            Each routine must be an object with:
+            - "type": A descriptive name for the routine (e.g. "Full Body Power")
+            - "rest_time": The rest time as a string (e.g. "60 seconds")
+            - "exercises": An array of objects, each with "name", "sets" (integer, usually around {adjusted_sets}), and "reps" (string or integer, e.g. "{adjusted_reps}" or "30 sec"). Limit to {ex_count} exercises per routine.
+            
+            Make sure the exercises are suitable given the available equipment. Do not wrap the JSON in Markdown backticks or provide any other text.
+            """
+            
+            response = model.generate_content(prompt)
+            # Try to parse the response as JSON. Strip backticks if present.
+            raw_text = response.text.strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:]
+            if raw_text.startswith("```"):
+                raw_text = raw_text[3:]
+            if raw_text.endswith("```"):
+                raw_text = raw_text[:-3]
+            
+            plans = json.loads(raw_text.strip())
+            return plans
+        except Exception as e:
+            print(f"Error calling Gemini for workout generation: {e}")
+            # Fall back to rule-based generation below
     
     plans = []
     

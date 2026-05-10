@@ -5,10 +5,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from typing import List
 import json
+import os
 
 import models, database, auth, recommendation
 from ml import model as ml_model, features as ml_features
 from utils import security, jwt as jwt_utils
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
 
 # Create database tables
 models.Base.metadata.create_all(bind=database.engine)
@@ -467,3 +471,68 @@ def get_dashboard_data(current_user: models.User = Depends(auth.get_current_user
         "calories": calories,
         "streak": streak
     }
+
+@app.post("/log-diet-nlp", response_model=models.DietLogResponse)
+def log_diet_nlp(text_input: dict, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    text = text_input.get("text", "")
+    if not text:
+        raise HTTPException(status_code=400, detail="Text input is required")
+        
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY is not configured")
+        
+    import google.generativeai as genai
+    try:
+        genai.configure(api_key=gemini_key)
+        model = genai.GenerativeModel('gemini-flash-latest')
+        
+        prompt = f"""
+        Extract the food items and their estimated nutritional macros from the following text: "{text}"
+        Return ONLY a JSON object with the following keys:
+        - "food_name": A short summary string of the food (e.g. "Oatmeal and 3 eggs")
+        - "calories": total estimated calories (number)
+        - "protein": total estimated protein in grams (number)
+        - "carbs": total estimated carbohydrates in grams (number)
+        - "fat": total estimated fat in grams (number)
+        
+        Do not wrap the response in markdown backticks or include any other text.
+        """
+        
+        response = model.generate_content(prompt)
+        raw_text = response.text.strip()
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        if raw_text.startswith("```"):
+            raw_text = raw_text[3:]
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+            
+        import json
+        data = json.loads(raw_text.strip())
+        
+        new_log = models.DietLog(
+            user_id=current_user.id,
+            food_name=data.get("food_name", "Unknown Food"),
+            calories=float(data.get("calories", 0)),
+            protein=float(data.get("protein", 0)),
+            carbs=float(data.get("carbs", 0)),
+            fat=float(data.get("fat", 0))
+        )
+        db.add(new_log)
+        db.commit()
+        db.refresh(new_log)
+        return new_log
+    except Exception as e:
+        print(f"Error calling Gemini for NLP diet logging: {e}")
+        raise HTTPException(status_code=500, detail="Failed to parse diet log using AI")
+
+@app.get("/diet-logs", response_model=List[models.DietLogResponse])
+def get_diet_logs(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    from datetime import datetime
+    today = datetime.utcnow().date()
+    # Simple filter by day (assuming UTC)
+    logs = db.query(models.DietLog).filter(models.DietLog.user_id == current_user.id).all()
+    # We filter in Python to avoid complex SQLAlchemy date cast which differs by dialect
+    today_logs = [log for log in logs if log.date.date() == today]
+    return today_logs
