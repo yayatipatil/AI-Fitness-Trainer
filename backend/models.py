@@ -132,6 +132,14 @@ class DietLog(Base):
     
     user = relationship("User")
 
+class APICache(Base):
+    __tablename__ = "api_cache"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    cache_key = Column(String, unique=True, index=True)
+    response_data = Column(String) # JSON string
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 # --- Pydantic Schemas ---
 
 class UserCreate(BaseModel):
@@ -242,7 +250,7 @@ class ChallengeResponse(BaseModel):
     id: int
     title: str
     description: str
-    target_value: int
+    target_value: float
     metric: str
     badge_url: Optional[str] = None
     
@@ -252,7 +260,7 @@ class ChallengeResponse(BaseModel):
 class UserChallengeResponse(BaseModel):
     id: int
     challenge: ChallengeResponse
-    progress: int
+    progress: float
     completed: bool
     completed_at: Optional[datetime] = None
     

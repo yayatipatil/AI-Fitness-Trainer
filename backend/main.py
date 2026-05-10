@@ -140,7 +140,8 @@ def get_workout(duration_minutes: int = 30, current_user: models.User = Depends(
         intensity_modifier=current_user.intensity_modifier,
         duration_minutes=duration_minutes,
         user_equipment=user_eq,
-        db_exercises=db_exercises
+        db_exercises=db_exercises,
+        db=db
     )
     
     diet_plan = recommendation.get_diet_recommendation(
@@ -148,7 +149,8 @@ def get_workout(duration_minutes: int = 30, current_user: models.User = Depends(
         height_cm=current_user.height_cm if current_user.height_cm else 170,
         age=current_user.age if current_user.age else 25,
         gender=current_user.gender if current_user.gender else "Male",
-        goal=current_user.fitness_goal if current_user.fitness_goal else "Maintenance"
+        goal=current_user.fitness_goal if current_user.fitness_goal else "Maintenance",
+        db=db
     )
     
     return {

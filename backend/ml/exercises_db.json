@@ -1,0 +1,218 @@
+[
+    {
+        "name": "Jumping Jacks",
+        "muscle_group": ["Full Body", "Calves"],
+        "equipment": ["bodyweight"],
+        "level": "beginner",
+        "type": "cardio",
+        "description": "A classic full-body cardio warmup exercise that elevates heart rate."
+    },
+    {
+        "name": "Burpees",
+        "muscle_group": ["Full Body", "Chest", "Legs"],
+        "equipment": ["bodyweight"],
+        "level": "intermediate",
+        "type": "cardio",
+        "description": "High intensity full body movement combining a squat, push-up, and jump."
+    },
+    {
+        "name": "Mountain Climbers",
+        "muscle_group": ["Core", "Shoulders"],
+        "equipment": ["bodyweight"],
+        "level": "beginner",
+        "type": "cardio",
+        "description": "Dynamic plank variation driving knees to chest for core and cardio."
+    },
+    {
+        "name": "Bodyweight Squats",
+        "muscle_group": ["Quads", "Glutes", "Hamstrings"],
+        "equipment": ["bodyweight"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Fundamental lower body movement for strength and mobility."
+    },
+    {
+        "name": "Lunges",
+        "muscle_group": ["Quads", "Glutes", "Hamstrings"],
+        "equipment": ["bodyweight", "dumbbells"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Unilateral lower body exercise improving balance and leg strength."
+    },
+    {
+        "name": "High Knees",
+        "muscle_group": ["Legs", "Core"],
+        "equipment": ["bodyweight"],
+        "level": "beginner",
+        "type": "cardio",
+        "description": "Running in place bringing knees up high to target core and elevate heart rate."
+    },
+    {
+        "name": "Plank",
+        "muscle_group": ["Core", "Shoulders"],
+        "equipment": ["bodyweight"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Isometric core hold to build stability and endurance."
+    },
+    {
+        "name": "Bicycle Crunches",
+        "muscle_group": ["Core", "Obliques"],
+        "equipment": ["bodyweight"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Dynamic ab exercise targeting the rectus abdominis and obliques."
+    },
+    {
+        "name": "Plank Jacks",
+        "muscle_group": ["Core", "Shoulders"],
+        "equipment": ["bodyweight"],
+        "level": "intermediate",
+        "type": "cardio",
+        "description": "Plank variation with jumping legs to combine cardio with core stability."
+    },
+    {
+        "name": "Jump Squats",
+        "muscle_group": ["Quads", "Glutes", "Calves"],
+        "equipment": ["bodyweight"],
+        "level": "intermediate",
+        "type": "cardio",
+        "description": "Explosive squat variation to build lower body power."
+    },
+    {
+        "name": "Russian Twists",
+        "muscle_group": ["Core", "Obliques"],
+        "equipment": ["bodyweight", "dumbbells", "kettlebell"],
+        "level": "intermediate",
+        "type": "strength",
+        "description": "Seated core rotation exercise targeting the obliques."
+    },
+    {
+        "name": "Push-ups",
+        "muscle_group": ["Chest", "Shoulders", "Triceps"],
+        "equipment": ["bodyweight"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Classic upper body pressing movement for chest and arm strength."
+    },
+    {
+        "name": "Pull-ups",
+        "muscle_group": ["Back", "Biceps", "Lats"],
+        "equipment": ["pull-up bar"],
+        "level": "intermediate",
+        "type": "strength",
+        "description": "Vertical pulling exercise to build back width and grip strength."
+    },
+    {
+        "name": "Bench Press",
+        "muscle_group": ["Chest", "Shoulders", "Triceps"],
+        "equipment": ["barbell", "dumbbells", "bench"],
+        "level": "intermediate",
+        "type": "strength",
+        "description": "Primary compound movement for upper body pressing strength."
+    },
+    {
+        "name": "Overhead Press",
+        "muscle_group": ["Shoulders", "Triceps"],
+        "equipment": ["barbell", "dumbbells"],
+        "level": "intermediate",
+        "type": "strength",
+        "description": "Vertical press for shoulder hypertrophy and strength."
+    },
+    {
+        "name": "Deadlifts",
+        "muscle_group": ["Hamstrings", "Glutes", "Lower Back"],
+        "equipment": ["barbell", "dumbbells"],
+        "level": "advanced",
+        "type": "strength",
+        "description": "Posterior chain compound lift for overall raw strength."
+    },
+    {
+        "name": "Bicep Curls",
+        "muscle_group": ["Biceps"],
+        "equipment": ["dumbbells", "barbell", "cable"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Isolation movement for arm hypertrophy."
+    },
+    {
+        "name": "Tricep Dips",
+        "muscle_group": ["Triceps", "Chest"],
+        "equipment": ["bodyweight", "dip station", "bench"],
+        "level": "intermediate",
+        "type": "strength",
+        "description": "Bodyweight pushing exercise targeting the triceps and lower chest."
+    },
+    {
+        "name": "Kettlebell Swings",
+        "muscle_group": ["Glutes", "Hamstrings", "Core"],
+        "equipment": ["kettlebell"],
+        "level": "intermediate",
+        "type": "cardio",
+        "description": "Explosive hip hinge movement for posterior chain power and conditioning."
+    },
+    {
+        "name": "Glute Bridges",
+        "muscle_group": ["Glutes", "Hamstrings"],
+        "equipment": ["bodyweight"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Floor exercise focusing on glute activation and hip extension."
+    },
+    {
+        "name": "Lat Pulldown",
+        "muscle_group": ["Back", "Lats", "Biceps"],
+        "equipment": ["cable"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Machine-based vertical pull for back development."
+    },
+    {
+        "name": "Leg Press",
+        "muscle_group": ["Quads", "Glutes", "Hamstrings"],
+        "equipment": ["machine"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Machine-based lower body compound lift."
+    },
+    {
+        "name": "Face Pulls",
+        "muscle_group": ["Rear Delts", "Upper Back"],
+        "equipment": ["cable"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Cable movement for rear deltoids and posture."
+    },
+    {
+        "name": "Cable Crossovers",
+        "muscle_group": ["Chest"],
+        "equipment": ["cable"],
+        "level": "intermediate",
+        "type": "strength",
+        "description": "Isolation chest exercise for hypertrophy."
+    },
+    {
+        "name": "Calf Raises",
+        "muscle_group": ["Calves"],
+        "equipment": ["bodyweight", "dumbbells", "machine"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Isolation movement for lower leg development."
+    },
+    {
+        "name": "Bird Dogs",
+        "muscle_group": ["Core", "Lower Back"],
+        "equipment": ["bodyweight"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Core stability exercise improving balance and spinal alignment."
+    },
+    {
+        "name": "Modified Push-ups",
+        "muscle_group": ["Chest", "Triceps", "Shoulders"],
+        "equipment": ["bodyweight"],
+        "level": "beginner",
+        "type": "strength",
+        "description": "Knee push-up variation for beginners to build upper body strength."
+    }
+]
